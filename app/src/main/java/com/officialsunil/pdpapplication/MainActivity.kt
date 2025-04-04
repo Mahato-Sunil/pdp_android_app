@@ -287,8 +287,7 @@ fun MainContainer(navigateToHome: () -> Unit, initGoogleLogin: () -> Unit) {
             // vertical spacer
             Spacer(modifier = Modifier.width(21.dp))
             Text(
-
-                text = "Sign in with Google",
+                text = "Skip For Now",
                 style = TextStyle(
                     fontSize = 12.sp,
                     fontWeight = FontWeight(700),

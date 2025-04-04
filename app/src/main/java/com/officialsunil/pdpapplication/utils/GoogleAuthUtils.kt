@@ -116,20 +116,9 @@ class GoogleAuthUtils {
          * @return Intent for adding a Google account.
          */
         private fun getIntent(): Intent {
-//            val pickAccountIntent = Intent(Intent.ACTION_PICK).apply {
-//                type = "application/email" // Opens account chooser
-//            }
-//            return pickAccountIntent
             return Intent(Settings.ACTION_ADD_ACCOUNT).apply {
                 putExtra(Settings.EXTRA_ACCOUNT_TYPES, arrayOf("com.google"))
             }
-//
-//            return Intent(Intent.ACTION_VIEW).apply {
-//                setClassName(
-//                    "com.google.android.gms",
-//                    "com.google.android.gms.auth.api.signin.ui.SignInHubActivity"
-//                )
-//            }
         }
     }
 }
