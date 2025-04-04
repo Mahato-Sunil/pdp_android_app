@@ -13,3 +13,28 @@
 .externalNativeBuild
 .cxx
 local.properties
+app/src/main/res/values/env_variables.xml
+
+# Firebase & Firestore
+firebase.json
+firestore-debug.log
+firestore.rules
+firestore.indexes.json
+.firebaserc
+
+# IDE & Build Files
+.idea/
+.kotlinc/
+.kotlinc/sessions/
+
+# Gradle Wrapper
+gradlew
+gradlew.bat
+gradle.properties
+
+# Build & Cache
+app/build/
+app/.caches/
+
+
+

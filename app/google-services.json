@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "985289917983",
+    "project_id": "potato-disease-predictio-71497",
+    "storage_bucket": "potato-disease-predictio-71497.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:985289917983:android:007a8cb9bd472aa25f372a",
+        "android_client_info": {
+          "package_name": "com.officialsunil.pdpapplication"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "985289917983-oc8nvjj2ok2bk4jc0mn75k986l4dhe3u.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.officialsunil.pdpapplication",
+            "certificate_hash": "6c94193257307db9b7b8d129919b6f07e46c441e"
+          }
+        },
+        {
+          "client_id": "985289917983-4369t6785cua3pvoneo2rlilqevgdjip.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBAr3r6oKHgPdkdDe18qHFBWaVTxWI0DZg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "985289917983-4369t6785cua3pvoneo2rlilqevgdjip.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

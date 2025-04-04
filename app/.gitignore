@@ -1,1 +1,3 @@
 /build
+app/src/main/res/values/env_variables.xml
+/release

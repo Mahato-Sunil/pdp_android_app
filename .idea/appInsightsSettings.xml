@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.officialsunil.pdpapplication" />
+                  <option name="mobileSdkAppId" value="1:985289917983:android:007a8cb9bd472aa25f372a" />
+                  <option name="projectId" value="potato-disease-predictio-71497" />
+                  <option name="projectNumber" value="985289917983" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

@@ -16,7 +16,7 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
-import com.officialsunil.merosathi.R
+import com.officialsunil.pdpapplication.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -24,23 +24,12 @@ import kotlinx.coroutines.tasks.await
 class GoogleAuthUtils {
     companion object {
         private const val TAG = "GoogleAuthUtils"
-
-        /**
-         * Initiates the Google Sign-In process.
-         * Uses the Credential Manager to retrieve credentials or launch an account picker.
-         *
-         * @param context Context of the activity or application.
-         * @param scope CoroutineScope for launching coroutines.
-         * @param launcher ManagedActivityResultLauncher for launching the account picker intent if needed.
-         * @param googleLogin Callback function invoked on successful sign-in.
-         */
         fun initiateGoogleSignin(
             context: Context,
             scope: CoroutineScope,
             launcher: ActivityResultLauncher<Intent>?,
             googleLogin: () -> Unit
         ) {
-            // Create a CredentialManager instance
             val credentialManager = CredentialManager.create(context)
 
             // Build the GetCredentialRequest with the Google ID Token option
@@ -69,7 +58,7 @@ class GoogleAuthUtils {
         }
 
         // function to  handle the sign in
-        suspend fun handleGoogleSignin(result: GetCredentialResponse, googleLogin: () -> Unit) {
+        private suspend fun handleGoogleSignin(result: GetCredentialResponse, googleLogin: () -> Unit) {
             val credential = result.credential
 
             when (credential) {
