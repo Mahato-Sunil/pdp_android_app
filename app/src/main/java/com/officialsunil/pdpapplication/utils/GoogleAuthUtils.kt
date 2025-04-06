@@ -45,6 +45,8 @@ class GoogleAuthUtils {
                     handleGoogleSignin(result, googleLogin)
                 } catch (e: NoCredentialException) {
                     // If no credentials are available, launch the account picker intent
+                    Log.w(TAG, "No credentials found, launching account picker", e)
+
                     Log.w(TAG, "No credentials found, launching account picker")
                     launcher?.launch(getIntent())
                 } catch (e: GetCredentialException) {

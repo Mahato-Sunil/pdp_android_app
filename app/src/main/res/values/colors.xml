@@ -10,4 +10,9 @@
     <color name="font_color">#926E16</color>
     <color name="light_background"> #fff7f1</color>
     <color name="dark_background">#161515</color>
+    <color name="light_card_background">#F6F8E6C5</color>
+    <color name="extra_light_card_background">#FDF2DE</color>
+    <color name="dark_card_background">#7C773E</color>
+    <color name="camera_transparent_background">#B8FDF2DE</color>
+
 </resources>
