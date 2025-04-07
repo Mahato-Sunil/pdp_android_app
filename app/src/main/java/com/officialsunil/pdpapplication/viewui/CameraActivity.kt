@@ -1,4 +1,4 @@
-package com.officialsunil.pdpapplication
+package com.officialsunil.pdpapplication.viewui
 
 import android.content.Context
 import android.content.Intent
@@ -7,7 +7,6 @@ import android.graphics.Matrix
 import android.media.MediaActionSound
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
@@ -25,6 +24,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -39,12 +39,11 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FlashAuto
 import androidx.compose.material.icons.filled.FlashOff
 import androidx.compose.material.icons.filled.FlashOn
-import androidx.compose.material.icons.filled.Photo
-import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -55,17 +54,32 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.officialsunil.pdpapplication.R
+import com.officialsunil.pdpapplication.data.PdpModelClassifier
+import com.officialsunil.pdpapplication.model.Classification
 import com.officialsunil.pdpapplication.ui.theme.PDPApplicationTheme
 import com.officialsunil.pdpapplication.utils.CameraPreview
 import com.officialsunil.pdpapplication.utils.CameraViewModel
 import com.officialsunil.pdpapplication.utils.ImagePreview
 import com.officialsunil.pdpapplication.utils.PermissionHandler
+import com.officialsunil.pdpapplication.utils.PotatoDiseaseAnalyzer
+import com.officialsunil.pdpapplication.utils.hideBottomSheet
 import com.officialsunil.pdpapplication.utils.saveImageToCache
+import com.officialsunil.pdpapplication.utils.scannerOverlay
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -143,10 +157,26 @@ class CameraActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun InitCameraActivity(applicationContext: Context) {
+        var classification by remember {
+            mutableStateOf(emptyList<Classification>())
+        }
+
+        val analyzer = remember {
+            PotatoDiseaseAnalyzer(
+                classifier = PdpModelClassifier(context = applicationContext), onResult = {
+                    classification = it
+                })
+
+        }
         val controller = remember {
             LifecycleCameraController(applicationContext).apply {
                 setEnabledUseCases(
-                    CameraController.IMAGE_CAPTURE or CameraController.VIDEO_CAPTURE
+                    CameraController.IMAGE_CAPTURE or CameraController.VIDEO_CAPTURE or CameraController.IMAGE_ANALYSIS
+                )
+
+                //set the image analyzer for real time image analysis
+                setImageAnalysisAnalyzer(
+                    ContextCompat.getMainExecutor(applicationContext), analyzer
                 )
             }
         }
@@ -164,7 +194,8 @@ class CameraActivity : ComponentActivity() {
             showBottomSheet = { showBottomSheet = it },
             controller = controller,
             cameraViewModel = cameraViewModel,
-            coroutineScope = coroutineScope
+            coroutineScope = coroutineScope,
+            classifications = classification
         )
 
         if (showBottomSheet) {
@@ -176,20 +207,24 @@ class CameraActivity : ComponentActivity() {
                 ImagePreview(
                     bitmaps = bitmaps,
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .fillMaxSize()
+                        .background(colorResource(R.color.extra_light_card_background))
                         .systemBarsPadding(),
                     onDelete = {
                         coroutineScope.launch {
-                            Toast.makeText(applicationContext, "Image Deleted", Toast.LENGTH_SHORT)
-                                .show()
-                            sheetState.hide()
-                            showBottomSheet = false
-                            cameraViewModel.clearBitmaps()
+                            hideBottomSheet(
+                                sheetState,
+                                showBottomSheet = { showBottomSheet = it },
+                                cameraViewModel
+                            )
                         }
+
                     },
                     onSave = {
-                        saveImageToCache(this@CameraActivity, bitmaps) },
-                    coroutineScope = coroutineScope
+                        saveImageToCache(this@CameraActivity, bitmaps)
+                    },
+                    coroutineScope = coroutineScope,
+                    classification = classification
                 )
             }
         }
@@ -201,7 +236,8 @@ class CameraActivity : ComponentActivity() {
         showBottomSheet: (Boolean) -> Unit,
         controller: LifecycleCameraController,
         cameraViewModel: CameraViewModel,
-        coroutineScope: CoroutineScope
+        coroutineScope: CoroutineScope,
+        classifications: List<Classification>
     ) {
         // for the bottom sheet
         Box(
@@ -209,19 +245,14 @@ class CameraActivity : ComponentActivity() {
                 .fillMaxSize()
                 .systemBarsPadding()
         ) {
-            CameraPreview(
-                controller = controller, modifier = Modifier.fillMaxSize()
-            )
-
             //top controls
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceAround,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp)
+                    .height(60.dp)
                     .padding(10.dp)
-                    .wrapContentHeight()
                     .background(colorResource(R.color.camera_transparent_background))
             ) {
 //            camera switch
@@ -255,6 +286,7 @@ class CameraActivity : ComponentActivity() {
                                 flashModeState = "AUTO"
                             }
 
+
                             else -> {
                                 controller.imageCaptureFlashMode = FLASH_MODE_ON
                                 flashModeState = "ON"
@@ -283,7 +315,7 @@ class CameraActivity : ComponentActivity() {
                             finish()
                         }
                     }) {
-                    // camera swith button
+                    // camera switch button
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Close Camera",
@@ -293,28 +325,68 @@ class CameraActivity : ComponentActivity() {
 
             }
 
+            CameraPreview(
+                controller = controller, modifier = Modifier.fillMaxSize()
+            )
+
+            // rectangular box for sanner overlay
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer(
+                        compositingStrategy = CompositingStrategy.Offscreen
+                    )
+                    .drawWithContent {
+                        drawContent()
+                        scannerOverlay(size)
+                    }) {
+
+            }
+
+            Spacer(modifier = Modifier.height(50.dp))
+
+            // add the prediction label and square box
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.White)
+            ) {
+                classifications.forEach {
+
+
+                    val textColorMode: Color = when {
+                        it.score >= 0.8 -> Color.Green
+                        it.score >= 0.7 -> colorResource(R.color.font_color)
+                        else -> Color.Red
+                    }
+
+                    Text(
+                        text = "Prediction : ${it.name} \n Accuracy : ${it.score}",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight(),
+                        textAlign = TextAlign.Center,
+                        fontSize = 16.sp,
+                        style = TextStyle(
+                            color = textColorMode, letterSpacing = TextUnit(1.5f, TextUnitType.Sp)
+                        ),
+                    )
+
+                }
+            }
+
             // bottom Buttons
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceAround,
+                horizontalArrangement = Arrangement.Center,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp)
                     .background(colorResource(R.color.camera_transparent_background))
                     .align(Alignment.BottomCenter)
             ) {
-                IconButton(
-                    onClick = {
-                        showBottomSheet(true)
-                    }) {
-                    Icon(
-                        imageVector = Icons.Default.Photo,
-                        contentDescription = "Open Gallery Icon",
-                        tint = colorResource(R.color.font_color),
-                        modifier = Modifier.size(40.dp)
-                    )
-                }
-
                 // capture button
                 IconButton(
                     onClick = {
@@ -327,18 +399,7 @@ class CameraActivity : ComponentActivity() {
                         imageVector = Icons.Default.Camera,
                         contentDescription = "Capture Image",
                         tint = colorResource(R.color.font_color),
-                        modifier = Modifier.size(40.dp)
-                    )
-                }
-
-                //video button
-                IconButton(
-                    onClick = {}) {
-                    Icon(
-                        imageVector = Icons.Default.Videocam,
-                        contentDescription = "Capture Video",
-                        tint = colorResource(R.color.font_color),
-                        modifier = Modifier.size(40.dp)
+                        modifier = Modifier.size(50.dp)
                     )
                 }
             }

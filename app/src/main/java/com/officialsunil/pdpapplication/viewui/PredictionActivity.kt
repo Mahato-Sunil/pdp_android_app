@@ -1,4 +1,4 @@
-package com.officialsunil.pdpapplication
+package com.officialsunil.pdpapplication.viewui
 
 import android.graphics.BitmapFactory
 import android.os.Bundle
@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
+import com.officialsunil.pdpapplication.R
 import com.officialsunil.pdpapplication.ui.theme.PDPApplicationTheme
 
 class PredictionActivity : ComponentActivity() {

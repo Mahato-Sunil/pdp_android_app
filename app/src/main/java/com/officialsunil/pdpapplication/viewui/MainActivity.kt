@@ -1,5 +1,6 @@
-package com.officialsunil.pdpapplication
+package com.officialsunil.pdpapplication.viewui
 
+import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.content.Intent
 import android.os.Bundle
@@ -44,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.animation.doOnEnd
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
+import com.officialsunil.pdpapplication.R
 import com.officialsunil.pdpapplication.ui.theme.PDPApplicationTheme
 import com.officialsunil.pdpapplication.utils.GoogleAuthUtils
 import com.officialsunil.pdpapplication.utils.PdpModelController
@@ -69,7 +71,7 @@ class MainActivity : ComponentActivity() {
                 zoomX.duration = 500L
                 zoomY.duration = 500L
 
-                val animatorSet = android.animation.AnimatorSet()
+                val animatorSet = AnimatorSet()
                 animatorSet.playTogether(zoomX, zoomY)
 
                 animatorSet.doOnEnd { screen.remove() }

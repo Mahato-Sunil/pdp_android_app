@@ -37,4 +37,7 @@ app/build/
 app/.caches/
 
 
+# assets
+app/src/main/assets
+
 

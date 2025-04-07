@@ -91,4 +91,9 @@ dependencies {
 
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 
+//    for tf lite (liteRT)
+    implementation(libs.tensorflow.lite)
+    implementation(libs.tensorflow.lite.task.vision)
+    implementation(libs.tensorflow.lite.gpu)
+
 }

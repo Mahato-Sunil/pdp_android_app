@@ -1,4 +1,4 @@
-package com.officialsunil.pdpapplication
+package com.officialsunil.pdpapplication.viewui
 
 import android.content.Intent
 import android.os.Bundle
@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.officialsunil.pdpapplication.R
 import com.officialsunil.pdpapplication.ui.theme.PDPApplicationTheme
 
 class HomeActivity : ComponentActivity() {
