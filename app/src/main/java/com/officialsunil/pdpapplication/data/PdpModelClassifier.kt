@@ -44,8 +44,10 @@ class PdpModelClassifier(
             classifier = ImageClassifier.createFromFileAndOptions(
                 context,
                 "landmark.tflite",
+//                "food.tflite",
                 options,
-            )
+
+                )
         } catch (e: IllegalStateException) {
             e.printStackTrace()
         }

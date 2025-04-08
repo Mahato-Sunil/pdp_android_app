@@ -1,6 +1,5 @@
 package com.officialsunil.pdpapplication.utils
 
-import android.R.color.holo_green_dark
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -8,13 +7,14 @@ import android.util.Log
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -25,21 +25,26 @@ import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.officialsunil.pdpapplication.R
 import com.officialsunil.pdpapplication.model.Classification
 import com.officialsunil.pdpapplication.viewui.PredictionActivity
 import kotlinx.coroutines.CoroutineScope
@@ -66,6 +71,30 @@ fun CameraPreview(
     )
 }
 
+@Composable
+@Preview(showBackground = true)
+fun ImagePreviewDummy() {
+    // Create a dummy bitmap
+    val dummyBitmap = Bitmap.createBitmap(256, 256, Bitmap.Config.ARGB_8888).apply {
+        eraseColor(android.graphics.Color.BLUE)
+    }
+
+    // Create a dummy coroutine scope using rememberCoroutineScope
+    val dummyScope = rememberCoroutineScope()
+
+    // Sample classification list
+    val dummyClassifications = Classification("Healthy", 0.85f)
+
+    // Call the ImagePreview composable
+    ImagePreview(
+        bitmaps = listOf(dummyBitmap),
+        onDelete = { /* Do nothing */ },
+        onSave = { /* Do nothing */ },
+        coroutineScope = dummyScope,
+        classification = dummyClassifications
+    )
+}
+
 
 @OptIn(ExperimentalMaterial3Api::class, DelicateCoroutinesApi::class)
 @Composable
@@ -73,14 +102,15 @@ fun ImagePreview(
     bitmaps: List<Bitmap>,
     modifier: Modifier = Modifier,
     onDelete: () -> Unit,
-    onSave: suspend () -> Unit,
+    onSave: suspend (Classification) -> Unit,
     coroutineScope: CoroutineScope,
-    classification: List<Classification>
+    classification: Classification
 ) {
     if (bitmaps.isEmpty()) {
         Box(
             modifier = modifier
                 .padding(16.dp)
+                .background(colorResource(R.color.light_background))
                 .fillMaxSize(), contentAlignment = Alignment.Center
         ) {
             Text(
@@ -92,38 +122,45 @@ fun ImagePreview(
         }
     } else {
         Box(
-            contentAlignment = Alignment.Center, modifier = modifier
-                .padding(10.dp)
+            modifier = Modifier
                 .fillMaxSize()
+                .background(colorResource(R.color.light_background))
         ) {
-//            classification.forEach {
             Text(
-//                    text = "Prediction: ${it.name} \n Accuracy: ${it.score}%",
-                text = "Prediction : Tower \n Accuracy : 99%", style = TextStyle(
+                text = "Prediction: ${classification.name} \n Accuracy: ${classification.score}%",
+                style = TextStyle(
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = colorResource(holo_green_dark)
-                ), modifier = modifier.fillMaxWidth(), textAlign = TextAlign.Center
+                    fontWeight = FontWeight(500),
+                    letterSpacing = 1.4.sp,
+                    color = colorResource(R.color.font_color)
+                ),
+                modifier = modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .padding(10.dp),
+                textAlign = TextAlign.Center
             )
-
-            Spacer(modifier.height(50.dp))
 
             Image(
                 bitmap = bitmaps.last().asImageBitmap(),
                 contentDescription = "Captured Image",
                 modifier = modifier
+                    .size(400.dp)
                     .padding(8.dp)
                     .clip(RoundedCornerShape(10.dp))
+                    .align(Alignment.Center),
+                contentScale = ContentScale.Fit
             )
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceAround,
                 modifier = modifier
-                    .padding(16.dp)
+                    .padding(10.dp)
                     .fillMaxWidth()
-                    .wrapContentHeight()
+                    .height(50.dp)
                     .align(Alignment.BottomCenter)
+                    .offset(y = (-20).dp)
             ) {
                 IconButton(
                     onClick = {
@@ -132,29 +169,33 @@ fun ImagePreview(
                     Icon(
                         imageVector = Icons.Default.DeleteForever,
                         contentDescription = "Delete Image",
-                        modifier = modifier.size(50.dp)
+                        modifier = modifier.fillMaxSize(),
+                        tint = colorResource(R.color.font_color)
                     )
                 }
 
                 IconButton(
                     onClick = {
                         coroutineScope.launch {
-                            onSave()
+                            onSave(classification)
                         }
                     }) {
                     Icon(
                         imageVector = Icons.Default.Check,
                         contentDescription = "Save Image",
-                        modifier = modifier.size(50.dp)
+                        modifier = modifier.fillMaxSize(),
+                        tint = colorResource(R.color.font_color)
                     )
                 }
             }
+
         }
     }
 }
 
+
 // function to save the image to cache and show the preview
-fun saveImageToCache(context: Context, bitmaps: List<Bitmap>) {
+fun saveImageToCache(context: Context, bitmaps: List<Bitmap>, prediction: Classification) {
     var absoluteFilePath: String
 
     if (bitmaps.isEmpty()) return
@@ -180,16 +221,6 @@ fun saveImageToCache(context: Context, bitmaps: List<Bitmap>) {
     //start the intent to show the image predcition with preview
     val imagePredictionIntent = Intent(context, PredictionActivity::class.java)
     imagePredictionIntent.putExtra("image_path", absoluteFilePath)
+    imagePredictionIntent.putExtra("prediction", prediction.name)
     context.startActivity(imagePredictionIntent)
-}
-
-// function to close the bottomsheet
-@OptIn(ExperimentalMaterial3Api::class)
-suspend fun hideBottomSheet(
-    sheetState: SheetState, showBottomSheet: (Boolean) -> Unit, cameraViewModel: CameraViewModel
-) {
-    showBottomSheet(false)
-    sheetState.hide()
-    cameraViewModel.clearBitmaps()
-    Log.e("Capture Image", "Image Deleted sheetState : $sheetState")
 }

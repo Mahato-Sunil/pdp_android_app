@@ -24,13 +24,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material.icons.Icons
@@ -43,9 +40,7 @@ import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -80,7 +75,6 @@ import com.officialsunil.pdpapplication.utils.CameraViewModel
 import com.officialsunil.pdpapplication.utils.ImagePreview
 import com.officialsunil.pdpapplication.utils.PermissionHandler
 import com.officialsunil.pdpapplication.utils.PotatoDiseaseAnalyzer
-import com.officialsunil.pdpapplication.utils.hideBottomSheet
 import com.officialsunil.pdpapplication.utils.saveImageToCache
 import com.officialsunil.pdpapplication.utils.scannerOverlay
 import kotlinx.coroutines.CoroutineScope
@@ -189,54 +183,52 @@ class CameraActivity : ComponentActivity() {
         val bitmaps by cameraViewModel.bitmaps.collectAsState()
 
         val coroutineScope = rememberCoroutineScope()
-        val sheetState = rememberModalBottomSheetState()
-        var showBottomSheet by remember { mutableStateOf(false) }
+        var showPrediction by remember { mutableStateOf(false) }
 
         //main camera ui
         CameraActivityUI(
-            showBottomSheet = { showBottomSheet = it },
+            showPrediction = { showPrediction = it },
             controller = controller,
             cameraViewModel = cameraViewModel,
             coroutineScope = coroutineScope,
             classifications = classification
         )
 
-//        if (showBottomSheet) {
-//            ModalBottomSheet(
-//                onDismissRequest = {
-//                    showBottomSheet = false
-//                }, sheetState = sheetState
-//            ) {
-//                ImagePreview(
-//                    bitmaps = bitmaps,
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .background(colorResource(R.color.extra_light_card_background))
-//                        .systemBarsPadding(),
-//                    onDelete = {
-//                        coroutineScope.launch {
-//                            hideBottomSheet(
-//                                sheetState,
-//                                showBottomSheet = { showBottomSheet = it },
-//                                cameraViewModel
-//                            )
-//                        }
-//
-//                    },
-//                    onSave = {
-//                        saveImageToCache(this@CameraActivity, bitmaps)
-//                    },
-//                    coroutineScope = coroutineScope,
-//                    classification = classification
-//                )
-//            }
-//        }
+        var freezePrediction by remember { mutableStateOf<Classification?>(null) }
+
+        if (showPrediction && freezePrediction == null) freezePrediction =
+            classification.maxByOrNull { it.score }
+
+        freezePrediction?.let { prediction ->
+            ImagePreview(
+                bitmaps = bitmaps,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .systemBarsPadding(),
+                onDelete = {
+                    coroutineScope.launch {
+                        freezePrediction = null
+                        showPrediction = false
+                        cameraViewModel.clearBitmaps()
+
+                    }
+
+                },
+                onSave = { prediction ->
+                    saveImageToCache(this@CameraActivity, bitmaps, prediction)
+                },
+
+                coroutineScope = coroutineScope,
+                classification = prediction
+            )
+        }
     }
+//    }
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun CameraActivityUI(
-        showBottomSheet: (Boolean) -> Unit,
+        showPrediction: (Boolean) -> Unit,
         controller: LifecycleCameraController,
         cameraViewModel: CameraViewModel,
         coroutineScope: CoroutineScope,
@@ -260,34 +252,7 @@ class CameraActivity : ComponentActivity() {
                     .drawWithContent {
                         drawContent()
                         scannerOverlay(size)
-                    }) {
-                Row(Modifier.zIndex(1f)) {
-                    classifications.forEach {
-
-                        val textColorMode: Color = when {
-                            it.score >= 0.8 -> Color.Green
-                            it.score >= 0.7 -> colorResource(R.color.font_color)
-                            else -> Color.Red
-                        }
-                        Text(
-                            text = "Prediction : ${it.name} \n Accuracy : ${it.score}",
-                            textAlign = TextAlign.Center,
-                            fontSize = 18.sp,
-                            style = TextStyle(
-                                color = textColorMode,
-                                letterSpacing = TextUnit(1.5f, TextUnitType.Sp)
-                            ),
-                            modifier = Modifier
-                                .offset(y = 150.dp)
-                                .fillMaxWidth()
-                                .background(colorResource(R.color.camera_transparent_background))
-                                .wrapContentHeight()
-                                .zIndex(1f),
-                            fontWeight = FontWeight(500)
-                        )
-                    }
-                }
-            }
+                    })
 
             //top controls
             Row(
@@ -369,6 +334,32 @@ class CameraActivity : ComponentActivity() {
 
             }
 
+            Row(Modifier.zIndex(1f)) {
+                classifications.forEach {
+
+                    val textColorMode: Color = when {
+                        it.score >= 0.8 -> Color.Green
+                        it.score >= 0.7 -> colorResource(R.color.font_color)
+                        else -> Color.Red
+                    }
+                    Text(
+                        text = "Prediction : ${it.name} \n Accuracy : ${it.score}",
+                        textAlign = TextAlign.Center,
+                        fontSize = 16.sp,
+                        style = TextStyle(
+                            color = textColorMode, letterSpacing = TextUnit(1.5f, TextUnitType.Sp)
+                        ),
+                        modifier = Modifier
+                            .offset(y = 150.dp)
+                            .fillMaxWidth()
+                            .background(colorResource(R.color.camera_transparent_background))
+                            .wrapContentHeight()
+                            .zIndex(1f),
+                        fontWeight = FontWeight(400)
+                    )
+                }
+            }
+
             // bottom Buttons
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -385,7 +376,7 @@ class CameraActivity : ComponentActivity() {
                         takePhoto(
                             controller = controller, onPhotoCapture = cameraViewModel::onTakePhoto
                         )
-                        showBottomSheet(true)
+                        showPrediction(true)
                     }) {
                     Icon(
                         imageVector = Icons.Default.Camera,
