@@ -53,3 +53,26 @@ fun InitPredictionActivity(absolutePath: String) {
     }
 
 }
+
+//ImagePreview(
+//                    bitmaps = bitmaps,
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .background(colorResource(R.color.extra_light_card_background))
+//                        .systemBarsPadding(),
+//                    onDelete = {
+//                        coroutineScope.launch {
+//                            hideBottomSheet(
+//                                sheetState,
+//                                showBottomSheet = { showBottomSheet = it },
+//                                cameraViewModel
+//                            )
+//                        }
+//
+//                    },
+//                    onSave = {
+//                        saveImageToCache(this@CameraActivity, bitmaps)
+//                    },
+//                    coroutineScope = coroutineScope,
+//                    classification = classification
+//                )

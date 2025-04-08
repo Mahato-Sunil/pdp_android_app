@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -79,12 +81,10 @@ fun ImagePreview(
         Box(
             modifier = modifier
                 .padding(16.dp)
-                .fillMaxSize(),
-            contentAlignment = Alignment.Center
+                .fillMaxSize(), contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "No Image Captured",
-                style = TextStyle(
+                text = "No Image Captured", style = TextStyle(
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                 )
@@ -92,36 +92,38 @@ fun ImagePreview(
         }
     } else {
         Box(
-            contentAlignment = Alignment.Center, modifier = Modifier
-                .padding(16.dp)
+            contentAlignment = Alignment.Center, modifier = modifier
+                .padding(10.dp)
                 .fillMaxSize()
         ) {
-            classification.forEach {
-                Text(
-                    text = "Prediction: ${it.name} \n Accuracy: ${it.score}",
-                    style = TextStyle(
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = colorResource(holo_green_dark)
-                    ),
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center
-                )
+//            classification.forEach {
+            Text(
+//                    text = "Prediction: ${it.name} \n Accuracy: ${it.score}%",
+                text = "Prediction : Tower \n Accuracy : 99%", style = TextStyle(
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colorResource(holo_green_dark)
+                ), modifier = modifier.fillMaxWidth(), textAlign = TextAlign.Center
+            )
 
-                Spacer(Modifier.height(50.dp))
+            Spacer(modifier.height(50.dp))
 
-                Image(
-                    bitmap = bitmaps.last().asImageBitmap(),
-                    contentDescription = "Captured Image",
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                )
-            }
+            Image(
+                bitmap = bitmaps.last().asImageBitmap(),
+                contentDescription = "Captured Image",
+                modifier = modifier
+                    .padding(8.dp)
+                    .clip(RoundedCornerShape(10.dp))
+            )
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceAround,
-                modifier = modifier.padding(16.dp)
+                modifier = modifier
+                    .padding(16.dp)
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .align(Alignment.BottomCenter)
             ) {
                 IconButton(
                     onClick = {
@@ -129,7 +131,8 @@ fun ImagePreview(
                     }) {
                     Icon(
                         imageVector = Icons.Default.DeleteForever,
-                        contentDescription = "Delete Image"
+                        contentDescription = "Delete Image",
+                        modifier = modifier.size(50.dp)
                     )
                 }
 
@@ -140,7 +143,9 @@ fun ImagePreview(
                         }
                     }) {
                     Icon(
-                        imageVector = Icons.Default.Check, contentDescription = "Save Image"
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Save Image",
+                        modifier = modifier.size(50.dp)
                     )
                 }
             }
@@ -181,9 +186,7 @@ fun saveImageToCache(context: Context, bitmaps: List<Bitmap>) {
 // function to close the bottomsheet
 @OptIn(ExperimentalMaterial3Api::class)
 suspend fun hideBottomSheet(
-    sheetState: SheetState,
-    showBottomSheet: (Boolean) -> Unit,
-    cameraViewModel: CameraViewModel
+    sheetState: SheetState, showBottomSheet: (Boolean) -> Unit, cameraViewModel: CameraViewModel
 ) {
     showBottomSheet(false)
     sheetState.hide()

@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -61,11 +62,13 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.officialsunil.pdpapplication.R
@@ -171,7 +174,7 @@ class CameraActivity : ComponentActivity() {
         val controller = remember {
             LifecycleCameraController(applicationContext).apply {
                 setEnabledUseCases(
-                    CameraController.IMAGE_CAPTURE or CameraController.VIDEO_CAPTURE or CameraController.IMAGE_ANALYSIS
+                    CameraController.IMAGE_CAPTURE or CameraController.IMAGE_ANALYSIS
                 )
 
                 //set the image analyzer for real time image analysis
@@ -198,36 +201,36 @@ class CameraActivity : ComponentActivity() {
             classifications = classification
         )
 
-        if (showBottomSheet) {
-            ModalBottomSheet(
-                onDismissRequest = {
-                    showBottomSheet = false
-                }, sheetState = sheetState
-            ) {
-                ImagePreview(
-                    bitmaps = bitmaps,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(colorResource(R.color.extra_light_card_background))
-                        .systemBarsPadding(),
-                    onDelete = {
-                        coroutineScope.launch {
-                            hideBottomSheet(
-                                sheetState,
-                                showBottomSheet = { showBottomSheet = it },
-                                cameraViewModel
-                            )
-                        }
-
-                    },
-                    onSave = {
-                        saveImageToCache(this@CameraActivity, bitmaps)
-                    },
-                    coroutineScope = coroutineScope,
-                    classification = classification
-                )
-            }
-        }
+//        if (showBottomSheet) {
+//            ModalBottomSheet(
+//                onDismissRequest = {
+//                    showBottomSheet = false
+//                }, sheetState = sheetState
+//            ) {
+//                ImagePreview(
+//                    bitmaps = bitmaps,
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .background(colorResource(R.color.extra_light_card_background))
+//                        .systemBarsPadding(),
+//                    onDelete = {
+//                        coroutineScope.launch {
+//                            hideBottomSheet(
+//                                sheetState,
+//                                showBottomSheet = { showBottomSheet = it },
+//                                cameraViewModel
+//                            )
+//                        }
+//
+//                    },
+//                    onSave = {
+//                        saveImageToCache(this@CameraActivity, bitmaps)
+//                    },
+//                    coroutineScope = coroutineScope,
+//                    classification = classification
+//                )
+//            }
+//        }
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -239,21 +242,62 @@ class CameraActivity : ComponentActivity() {
         coroutineScope: CoroutineScope,
         classifications: List<Classification>
     ) {
-        // for the bottom sheet
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .systemBarsPadding()
         ) {
+            CameraPreview(
+                controller = controller, modifier = Modifier.fillMaxSize()
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer(
+                        compositingStrategy = CompositingStrategy.Offscreen
+                    )
+                    .drawWithContent {
+                        drawContent()
+                        scannerOverlay(size)
+                    }) {
+                Row(Modifier.zIndex(1f)) {
+                    classifications.forEach {
+
+                        val textColorMode: Color = when {
+                            it.score >= 0.8 -> Color.Green
+                            it.score >= 0.7 -> colorResource(R.color.font_color)
+                            else -> Color.Red
+                        }
+                        Text(
+                            text = "Prediction : ${it.name} \n Accuracy : ${it.score}",
+                            textAlign = TextAlign.Center,
+                            fontSize = 18.sp,
+                            style = TextStyle(
+                                color = textColorMode,
+                                letterSpacing = TextUnit(1.5f, TextUnitType.Sp)
+                            ),
+                            modifier = Modifier
+                                .offset(y = 150.dp)
+                                .fillMaxWidth()
+                                .background(colorResource(R.color.camera_transparent_background))
+                                .wrapContentHeight()
+                                .zIndex(1f),
+                            fontWeight = FontWeight(500)
+                        )
+                    }
+                }
+            }
+
             //top controls
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceAround,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(60.dp)
-                    .padding(10.dp)
+                    .height(80.dp)
                     .background(colorResource(R.color.camera_transparent_background))
+                    .align(Alignment.TopCenter)
             ) {
 //            camera switch
                 IconButton(
@@ -325,65 +369,13 @@ class CameraActivity : ComponentActivity() {
 
             }
 
-            CameraPreview(
-                controller = controller, modifier = Modifier.fillMaxSize()
-            )
-
-            // rectangular box for sanner overlay
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer(
-                        compositingStrategy = CompositingStrategy.Offscreen
-                    )
-                    .drawWithContent {
-                        drawContent()
-                        scannerOverlay(size)
-                    }) {
-
-            }
-
-            Spacer(modifier = Modifier.height(50.dp))
-
-            // add the prediction label and square box
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White)
-            ) {
-                classifications.forEach {
-
-
-                    val textColorMode: Color = when {
-                        it.score >= 0.8 -> Color.Green
-                        it.score >= 0.7 -> colorResource(R.color.font_color)
-                        else -> Color.Red
-                    }
-
-                    Text(
-                        text = "Prediction : ${it.name} \n Accuracy : ${it.score}",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .wrapContentHeight(),
-                        textAlign = TextAlign.Center,
-                        fontSize = 16.sp,
-                        style = TextStyle(
-                            color = textColorMode, letterSpacing = TextUnit(1.5f, TextUnitType.Sp)
-                        ),
-                    )
-
-                }
-            }
-
             // bottom Buttons
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp)
+                    .height(80.dp)
                     .background(colorResource(R.color.camera_transparent_background))
                     .align(Alignment.BottomCenter)
             ) {
@@ -399,7 +391,7 @@ class CameraActivity : ComponentActivity() {
                         imageVector = Icons.Default.Camera,
                         contentDescription = "Capture Image",
                         tint = colorResource(R.color.font_color),
-                        modifier = Modifier.size(50.dp)
+                        modifier = Modifier.fillMaxSize()
                     )
                 }
             }
