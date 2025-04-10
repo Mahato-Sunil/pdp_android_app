@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,36 +28,49 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBackIosNew
+import androidx.compose.material.icons.filled.ArrowForwardIos
+import androidx.compose.material.icons.filled.CameraEnhance
+import androidx.compose.material.icons.filled.House
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import com.officialsunil.pdpapplication.R
 import com.officialsunil.pdpapplication.ui.theme.PDPApplicationTheme
 
@@ -88,18 +102,23 @@ class HomeActivity : ComponentActivity() {
 //  activity layout
 @Composable
 fun InitHomeActivityUI(initCameraActivity: () -> Unit) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colorResource(R.color.light_background))
-            .padding(start = 5.dp, end = 5.dp)
-            .systemBarsPadding()
-//            .verticalScroll(rememberScrollState())
-    ) {
-        HomeHeadingUI()
-        HomeContainer()
-        HomeButtonContainer(initCameraActivity)
+    Scaffold(
+        topBar = { HomeHeadingUI() },
+        bottomBar = { HomeButtonContainer(initCameraActivity) }) { innerPadding ->
+        Column(
+//            verticalArrangement = Arrangement.SpaceBetween,
+//            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+                .background(colorResource(R.color.light_background))
+//                .padding(start = 5.dp, end = 5.dp)
+                .systemBarsPadding()
+
+                .verticalScroll(rememberScrollState())
+        ) {
+            HomeContainer()
+        }
     }
 }
 
@@ -110,168 +129,124 @@ fun InitHomeActivityUI(initCameraActivity: () -> Unit) {
  */
 @Composable
 fun HomeHeadingUI() {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(180.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight()
+    Column(
+        modifier = Modifier.fillMaxWidth()
     ) {
         Image(
             painter = painterResource(R.drawable.pdp_logo_text),
             contentDescription = "System Logo",
             modifier = Modifier
-                .width(120.dp)
-                .padding(start = 10.dp, 0.dp)
+                .width(100.dp)
+                .padding(start = 16.dp),
+            contentScale = ContentScale.Fit
         )
-
-        Icon(
-            imageVector = Icons.Default.Person,
-            contentDescription = "Profile Icon",
-            tint = colorResource(R.color.font_color),
+        HorizontalDivider(
+            thickness = 1.dp,
             modifier = Modifier
-                .width(40.dp)
-                .height(40.dp)
+                .fillMaxWidth()
+                .padding(0.dp),
+            color = Color.LightGray
         )
     }
 }
 
 @Composable
 fun HomeContainer() {
-    Spacer(modifier = Modifier.height(40.dp))
+    val localContext = LocalContext.current
 
-    // card
-    ElevatedCard(
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 8.dp
-        ), colors = CardDefaults.cardColors(
-            containerColor = colorResource(R.color.light_card_background),
-            contentColor = colorResource(R.color.font_color)
-        ), modifier = Modifier
-            .fillMaxWidth(fraction = 0.9f)
-            .height(225.dp)
+    Column(
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Box(
+        Row(
+            horizontalArrangement = Arrangement.Absolute.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(50.dp)
-                .background(colorResource(R.color.extra_light_card_background)),
-            contentAlignment = Alignment.Center
+                .padding(start = 10.dp, end = 20.dp)
+                .height(35.dp)
         ) {
             Text(
-                text = "Tips of the Day",
+                text = "Your diagnoses",
                 style = TextStyle(
                     color = colorResource(R.color.font_color),
-                    fontSize = 20.sp,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = TextUnit(1.5f, TextUnitType.Sp)
                 ),
             )
-        }
 
-        Box(
-            modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
-        ) {
             Text(
-                text = "Store potatoes in a cool, dark, and well-ventilated place, away from onions, to prevent sprouting and decay.",
-                style = TextStyle(
-                    color = colorResource(R.color.font_color),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    letterSpacing = TextUnit(1.5f, TextUnitType.Sp),
-                    textAlign = TextAlign.Center
-                ),
-                modifier = Modifier.padding(10.dp)
-
-            )
+                text = "View All", style = TextStyle(
+                    color = Color.Blue,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Normal,
+                    letterSpacing = 1.2.sp,
+                    textDecoration = TextDecoration.Underline
+                ), modifier = Modifier.clickable {
+                    val diagnosesIntent = Intent(localContext, DiagnosesListActivity::class.java)
+                    localContext.startActivity(diagnosesIntent)
+                })
         }
-    }
 
-    // history section
-    Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(10.dp)
-    ) {
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor = colorResource(R.color.extra_light_card_background)
-            ), modifier = Modifier
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .padding(5.dp)
                 .fillMaxWidth()
-                .wrapContentHeight()
-        ) {
-            Box(
-                contentAlignment = Alignment.CenterStart,
-                modifier = Modifier
-                    .padding(start = 10.dp, 2.dp)
-                    .height(35.dp)
+                .background(colorResource(R.color.light_card_background))
+                .clickable {
+                    //pass the path and the  prediction result
+                    val predictionIntent = Intent(localContext, PredictionActivity::class.java)
+                    localContext.startActivity(predictionIntent)
+                }) {
+            Image(
+                painter = painterResource(R.drawable.pdp_logo),
+                contentDescription = "Recent History Image",
+                modifier = Modifier.size(100.dp)
+            )
+
+            Column(
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                //date
                 Text(
-                    text = "Recent Scanned Diseases",
-                    style = TextStyle(
-                        color = colorResource(R.color.font_color),
+                    text = "April 21", style = TextStyle(
+                        color = Color.DarkGray,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Normal,
-                        letterSpacing = TextUnit(1.5f, TextUnitType.Sp)
-                    ),
+                        letterSpacing = 1.1.sp,
+                        textAlign = TextAlign.Start
+                    ), modifier = Modifier
+                        .fillMaxWidth(.75f)
+                        .height(25.dp)
+                )
+
+                Text(
+                    text = "Late Blignt", style = TextStyle(
+                        color = colorResource(R.color.font_color),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        letterSpacing = 1.1.sp,
+                        textAlign = TextAlign.Start
+                    ), modifier = Modifier
+                        .fillMaxWidth(.75f)
+                        .height(25.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Box(
-                contentAlignment = Alignment.CenterStart, modifier = Modifier.fillMaxWidth()
+            IconButton(
+                onClick = { /* Handle the button click */ },
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .padding(2.dp)
-                        .background(colorResource(R.color.dark_card_background))
-                        .fillMaxWidth()
-                ) {
-                    Box(
-                        contentAlignment = Alignment.CenterStart,
-                        modifier = Modifier
-                            .fillMaxWidth(.45f)
-                            .height(100.dp)
-                            .background(colorResource(R.color.extra_light_card_background))
-                    ) {
-                        Image(
-                            painter = painterResource(R.drawable.pdp_logo),
-                            contentDescription = "Recent History Image",
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(20.dp))
-
-                    OutlinedButton(
-                        onClick = {}, modifier = Modifier.fillMaxWidth(.8f),
-
-                        border = BorderStroke(
-                            2.dp, color = colorResource(R.color.light_card_background)
-                        ), shape = RoundedCornerShape(15.dp)
-                    ) {
-                        Text(
-                            text = "See More", style = TextStyle(
-                                color = colorResource(R.color.light_background),
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium
-                            ), modifier = Modifier.wrapContentSize()
-                        )
-
-                        Spacer(Modifier.width(15.dp))
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "See More Icon",
-                            tint = colorResource(R.color.light_background)
-                        )
-                    }
-                }
+                Icon(
+                    imageVector = Icons.Default.ArrowForwardIos,
+                    contentDescription = "See More Icon",
+                    tint = colorResource(R.color.font_color)
+                )
             }
-
         }
     }
 }
@@ -279,86 +254,48 @@ fun HomeContainer() {
 // bottom section
 @Composable
 fun HomeButtonContainer(initCameraActivity: () -> Unit) {
-    //declare the paths and variables
-    val barHeight = 48.dp
-    val fabRadius = 28.dp
-    val background = colorResource(R.color.light_card_background)
-
-    Box(
-        modifier = Modifier.fillMaxSize()
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(100.dp)
+            .background(colorResource(R.color.extra_light_card_background))
     ) {
-        // Draw the bottom bar background with curved cutout
-        Canvas(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(barHeight + fabRadius / 2f)
-                .align(Alignment.BottomCenter)
+        //home
+        IconButton(
+            onClick = { /* Handle the button click */ },
         ) {
-            //  size denotes the size of the canvax in canvas scope
-            val width = size.width
-            val height = size.height
-            val fabDiameter = fabRadius.toPx() * 2
-            val fabMargin = 50.dp.toPx()
-
-            val curveDepth = fabRadius.toPx() * 1.57f   // for flattening the craddle depth
-
-            val path = Path().apply {
-                moveTo(0f, 0f)
-                lineTo(width / 2f - fabDiameter / 2f - fabMargin, 0f)
-
-                cubicTo(
-                    width / 2f - fabDiameter / 2f,
-                    0f,
-                    width / 2f - fabRadius.toPx(),
-                    curveDepth,
-                    width / 2f,
-                    curveDepth
-                )
-
-                cubicTo(
-                    width / 2f + fabRadius.toPx(),
-                    curveDepth,
-                    width / 2f + fabDiameter / 2f,
-                    0f,
-                    width / 2f + fabDiameter / 2f + fabMargin,
-                    0f
-                )
-
-                lineTo(width, 0f)
-                lineTo(width, height)
-                lineTo(0f, height)
-                close()
-            }
-
-            drawPath(
-                path = path, color = background, style = Fill
+            Icon(
+                imageVector = Icons.Default.House,
+                contentDescription = "Home Icon",
+                tint = colorResource(R.color.font_color),
+                modifier = Modifier.fillMaxSize()
             )
         }
 
-        // Floating button content
-        Box(
-            modifier = Modifier
-                .size(fabRadius * 2f)
-                .aspectRatio(1f)
-                .align(Alignment.BottomCenter)
-                .offset(y = -(fabRadius * 0.8f))
-                .clip(CircleShape)
-                .border(1.6.dp, colorResource(R.color.dark_card_background), CircleShape),
-            contentAlignment = Alignment.TopCenter
-        ) {
-            Image(
-                painter = painterResource(R.drawable.camera_shutter),
-                contentDescription = "Capture Button",
-                contentScale = ContentScale.Fit,
-                modifier = Modifier
-                    .matchParentSize()
-                    .clickable {
-                        initCameraActivity()
-                    })
+        // shutter button
+        IconButton(
+            onClick = { initCameraActivity() }) {
+            Icon(
+                imageVector = Icons.Default.CameraEnhance,
+                contentDescription = "Camera Icon",
+                tint = colorResource(R.color.font_color),
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        IconButton(
+            onClick = { initCameraActivity() }) {
+            Icon(
+                imageVector = Icons.Default.Person,
+                contentDescription = "Camera Icon",
+                tint = colorResource(R.color.font_color),
+                modifier = Modifier.fillMaxSize()
+            )
         }
     }
 }
-
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable

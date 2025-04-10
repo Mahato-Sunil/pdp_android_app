@@ -3,4 +3,5 @@
     <string name="title_activity_home">HomeActivity</string>
     <string name="title_activity_camera">CameraActivity</string>
     <string name="title_activity_prediction">PredictionActivity</string>
+    <string name="title_activity_diagnoses_list">DiagnosesListActivity</string>
 </resources>
