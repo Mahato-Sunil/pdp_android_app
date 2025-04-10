@@ -74,11 +74,12 @@ import com.officialsunil.pdpapplication.utils.CameraPreview
 import com.officialsunil.pdpapplication.utils.CameraViewModel
 import com.officialsunil.pdpapplication.utils.ImagePreview
 import com.officialsunil.pdpapplication.utils.PermissionHandler
-import com.officialsunil.pdpapplication.utils.PotatoDiseaseAnalyzer
+import com.officialsunil.pdpapplication.model.PotatoDiseaseAnalyzer
 import com.officialsunil.pdpapplication.utils.saveImageToCache
 import com.officialsunil.pdpapplication.utils.scannerOverlay
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 
 class CameraActivity : ComponentActivity() {
@@ -114,14 +115,17 @@ class CameraActivity : ComponentActivity() {
         controller.takePicture(
             ContextCompat.getMainExecutor(applicationContext),
             object : ImageCapture.OnImageCapturedCallback() {
-                override fun onCaptureSuccess(image: ImageProxy) {
-                    super.onCaptureSuccess(image)
+                override fun onCaptureStarted() {
+                    super.onCaptureStarted()
 
                     val captureSound = MediaActionSound()
                     captureSound.play(MediaActionSound.SHUTTER_CLICK)
+                }
+
+                override fun onCaptureSuccess(image: ImageProxy) {
+                    super.onCaptureSuccess(image)
 
                     val originalBitmap = image.toBitmap()  // Only one conversion
-
                     val matrix = Matrix().apply {
                         postRotate(image.imageInfo.rotationDegrees.toFloat())
                     }
@@ -135,8 +139,25 @@ class CameraActivity : ComponentActivity() {
                         matrix,
                         true
                     )
+                    // crop the image
+                    val boxSizeRatio = 0.8f
+                    val boxSize =
+                        (minOf(rotatedBitmap.width, rotatedBitmap.height) * boxSizeRatio).toInt()
 
-                    onPhotoCapture(rotatedBitmap)
+                    val cropLeft = ((rotatedBitmap.width - boxSize) / 2f).toInt()
+                    val cropTop = ((rotatedBitmap.height - boxSize) / 2f).toInt()
+                    // Make sure the crop box stays within bounds
+                    val safeCropLeft = cropLeft.coerceIn(0, rotatedBitmap.width - boxSize)
+                    val safeCropTop = cropTop.coerceIn(0, rotatedBitmap.height - boxSize)
+
+                    val croppedBitmap = Bitmap.createBitmap(
+                        rotatedBitmap,
+                        safeCropLeft,
+                        safeCropTop,
+                        boxSize,
+                        boxSize
+                    )
+                    onPhotoCapture(croppedBitmap)
                     image.close()
                 }
 
@@ -342,15 +363,20 @@ class CameraActivity : ComponentActivity() {
                         it.score >= 0.7 -> colorResource(R.color.font_color)
                         else -> Color.Red
                     }
+
                     Text(
-                        text = "Prediction : ${it.name} \n Accuracy : ${it.score}",
+                        text = "Prediction : ${it.name} \n Accuracy : ${
+                            String.format(
+                                Locale.US, "%.2f", it.score * 100
+                            )
+                        }",
                         textAlign = TextAlign.Center,
                         fontSize = 16.sp,
                         style = TextStyle(
                             color = textColorMode, letterSpacing = TextUnit(1.5f, TextUnitType.Sp)
                         ),
                         modifier = Modifier
-                            .offset(y = 150.dp)
+                            .offset(y = 120.dp)
                             .fillMaxWidth()
                             .background(colorResource(R.color.camera_transparent_background))
                             .wrapContentHeight()

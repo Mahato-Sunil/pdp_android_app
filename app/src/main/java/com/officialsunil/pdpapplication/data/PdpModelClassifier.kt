@@ -43,8 +43,10 @@ class PdpModelClassifier(
 
             classifier = ImageClassifier.createFromFileAndOptions(
                 context,
+//                "densenet.tflite",
                 "landmark.tflite",
 //                "food.tflite",
+//                "cartoonized.tflite",
                 options,
 
                 )

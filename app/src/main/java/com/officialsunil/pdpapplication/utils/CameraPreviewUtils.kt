@@ -31,8 +31,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
@@ -43,6 +41,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.graphics.createBitmap
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.officialsunil.pdpapplication.R
 import com.officialsunil.pdpapplication.model.Classification
@@ -75,7 +74,7 @@ fun CameraPreview(
 @Preview(showBackground = true)
 fun ImagePreviewDummy() {
     // Create a dummy bitmap
-    val dummyBitmap = Bitmap.createBitmap(256, 256, Bitmap.Config.ARGB_8888).apply {
+    val dummyBitmap = createBitmap(256, 256).apply {
         eraseColor(android.graphics.Color.BLUE)
     }
 
@@ -127,7 +126,7 @@ fun ImagePreview(
                 .background(colorResource(R.color.light_background))
         ) {
             Text(
-                text = "Prediction: ${classification.name} \n Accuracy: ${classification.score}%",
+                text = "Prediction: ${classification.name} \n Accuracy: ${String.format(Locale.US, "%.2f", classification.score * 100) } %",
                 style = TextStyle(
                     fontSize = 16.sp,
                     fontWeight = FontWeight(500),
@@ -219,8 +218,9 @@ fun saveImageToCache(context: Context, bitmaps: List<Bitmap>, prediction: Classi
     }
 
     //start the intent to show the image predcition with preview
+    val predictionFormat = prediction.name + " (" + String.format(Locale.US, "%.2f", prediction.score * 100)+ "%)"
     val imagePredictionIntent = Intent(context, PredictionActivity::class.java)
     imagePredictionIntent.putExtra("image_path", absoluteFilePath)
-    imagePredictionIntent.putExtra("prediction", prediction.name)
+    imagePredictionIntent.putExtra("prediction", predictionFormat)
     context.startActivity(imagePredictionIntent)
 }

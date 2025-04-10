@@ -11,6 +11,7 @@ class CameraViewModel : ViewModel() {
 
     fun onTakePhoto(bitmap : Bitmap) {
         _bitmaps.value += bitmap
+
     }
 
     fun clearBitmaps() {

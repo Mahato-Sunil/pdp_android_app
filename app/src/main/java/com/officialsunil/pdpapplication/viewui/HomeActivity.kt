@@ -27,8 +27,10 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
@@ -93,6 +95,7 @@ fun InitHomeActivityUI(initCameraActivity: () -> Unit) {
             .background(colorResource(R.color.light_background))
             .padding(start = 5.dp, end = 5.dp)
             .systemBarsPadding()
+//            .verticalScroll(rememberScrollState())
     ) {
         HomeHeadingUI()
         HomeContainer()
