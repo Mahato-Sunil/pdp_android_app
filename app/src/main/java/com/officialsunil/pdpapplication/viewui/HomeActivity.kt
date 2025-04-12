@@ -104,22 +104,20 @@ class HomeActivity : ComponentActivity() {
 fun InitHomeActivityUI(initCameraActivity: () -> Unit) {
     Scaffold(
         topBar = { HomeHeadingUI() },
-        bottomBar = { HomeButtonContainer(initCameraActivity) }) { innerPadding ->
+        bottomBar = { HomeButtonContainer(initCameraActivity) }
+    ) { innerPadding ->
         Column(
-//            verticalArrangement = Arrangement.SpaceBetween,
-//            horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
-                .padding(innerPadding)
+                .systemBarsPadding() // 👈 Add system bar padding first
+                .padding(innerPadding) // 👈 Then scaffold inner padding
                 .fillMaxSize()
                 .background(colorResource(R.color.light_background))
-//                .padding(start = 5.dp, end = 5.dp)
-                .systemBarsPadding()
-
                 .verticalScroll(rememberScrollState())
         ) {
             HomeContainer()
         }
     }
+
 }
 
 
@@ -130,7 +128,7 @@ fun InitHomeActivityUI(initCameraActivity: () -> Unit) {
 @Composable
 fun HomeHeadingUI() {
     Column(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().systemBarsPadding()
     ) {
         Image(
             painter = painterResource(R.drawable.pdp_logo_text),
@@ -155,7 +153,7 @@ fun HomeContainer() {
     val localContext = LocalContext.current
 
     Column(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().systemBarsPadding()
     ) {
         Row(
             horizontalArrangement = Arrangement.Absolute.SpaceBetween,

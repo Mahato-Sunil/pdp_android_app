@@ -328,11 +328,3 @@ fun PredictionDescriptions(
         }
     }
 }
-
-////@Preview(showSystemUi = true, showBackground = true)
-//@Composable
-//fun Preview() {
-//    val path = "/cache/"
-//    val pred = "Human 20%"
-//    InitPredictionActivity(path, pred)
-//}

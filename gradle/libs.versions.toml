@@ -18,9 +18,9 @@ composeBom = "2025.03.01"
 datastorePreferencesCoreAndroid = "1.2.0-alpha01"
 lifecycleViewmodelCompose = "2.8.7"
 materialIconsExtended = "1.7.8"
-tensorflowLite = "2.9.0"
-tensorflowLiteGpu = "2.9.0"
-tensorflowLiteTaskVision = "0.3.1"
+tensorflowLite = "2.14.0"
+tensorflowLiteGpu = "2.14.0"     #2.9.0
+tensorflowLiteTaskVision = "0.4.4" #o.3.1
 
 [libraries]
 androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "cameraCore" }

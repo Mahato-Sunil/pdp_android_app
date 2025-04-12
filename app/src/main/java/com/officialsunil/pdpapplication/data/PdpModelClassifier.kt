@@ -10,6 +10,7 @@ import android.graphics.Bitmap
 import android.view.Surface
 import com.officialsunil.pdpapplication.model.Classification
 import com.officialsunil.pdpapplication.model.ModelClassifier
+import org.tensorflow.lite.support.common.ops.NormalizeOp
 import org.tensorflow.lite.task.core.BaseOptions
 import org.tensorflow.lite.task.vision.classifier.ImageClassifier
 import org.tensorflow.lite.support.image.ImageProcessor
@@ -27,15 +28,10 @@ class PdpModelClassifier(
 
     // set the classifier
     private fun setupClassifier() {
-        val baseOptions = BaseOptions.builder()
-            .setNumThreads(2)
-            .build()
+        val baseOptions = BaseOptions.builder().setNumThreads(2).build()
 
-        val options = ImageClassifier.ImageClassifierOptions.builder()
-            .setBaseOptions(baseOptions)
-            .setMaxResults(maxResults)
-            .setScoreThreshold(threshold)
-            .build()
+        val options = ImageClassifier.ImageClassifierOptions.builder().setBaseOptions(baseOptions)
+            .setMaxResults(maxResults).setScoreThreshold(threshold).build()
 
         try {
             // dont use named parameters here
@@ -43,6 +39,8 @@ class PdpModelClassifier(
 
             classifier = ImageClassifier.createFromFileAndOptions(
                 context,
+//                "unknownPdpModel.tflite",
+//                "model.tflite",
 //                "densenet.tflite",
                 "landmark.tflite",
 //                "food.tflite",
@@ -57,19 +55,20 @@ class PdpModelClassifier(
 
     // override the methods
     override fun classify(
-        bitmap: Bitmap,
-        rotation: Int
+        bitmap: Bitmap, rotation: Int
     ): List<Classification> {
 
-        if (classifier == null)
-            setupClassifier()
+        if (classifier == null) setupClassifier()
 
-        val imageProcessor = ImageProcessor.Builder().build()
+        val imageProcessor = ImageProcessor.Builder()
+            .add(NormalizeOp(0f, 255f)) // Scale pixel values from [0,255] to [0,1]
+            .build()
+
         val tensorImage =
             imageProcessor.process(TensorImage.fromBitmap(bitmap))    // convert the bitmap to tensor image
-        val imageProcessingOptions = ImageProcessingOptions.builder()
-            .setOrientation(getOrientationFromRotation(rotation))
-            .build()
+        val imageProcessingOptions =
+            ImageProcessingOptions.builder().setOrientation(getOrientationFromRotation(rotation))
+                .build()
         val results = classifier?.classify(tensorImage, imageProcessingOptions)
 
         /*
@@ -85,8 +84,7 @@ class PdpModelClassifier(
         return results?.flatMap { classifications ->
             classifications.categories.map { category ->
                 Classification(
-                    name = category.displayName,
-                    score = category.score
+                    name = category.displayName, score = category.score
                 )
             }
         }?.distinctBy { it.name } ?: emptyList()
