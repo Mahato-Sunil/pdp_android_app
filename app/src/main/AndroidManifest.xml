@@ -20,6 +20,11 @@
         android:theme="@style/Theme.PdpApplication.CustomSplashScreen"
         tools:targetApi="31">
         <activity
+            android:name=".viewui.AccountCenterActivity"
+            android:exported="false"
+            android:label="@string/title_activity_account_center"
+            android:theme="@style/Theme.PdpApplication.CustomSplashScreen" />
+        <activity
             android:name=".viewui.GoogleSignInRationale"
             android:exported="false"
             android:label="@string/title_activity_google_sign_in_rationale"

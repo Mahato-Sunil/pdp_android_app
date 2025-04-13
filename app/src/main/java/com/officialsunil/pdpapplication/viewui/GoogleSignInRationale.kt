@@ -2,9 +2,12 @@ package com.officialsunil.pdpapplication.viewui
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -42,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
 import com.officialsunil.pdpapplication.R
 import com.officialsunil.pdpapplication.utils.GoogleAuthUtils
+import com.officialsunil.pdpapplication.utils.SigninigRationale
 import com.officialsunil.pdpapplication.viewui.ui.theme.PDPApplicationTheme
 import kotlinx.coroutines.CoroutineScope
 
@@ -51,8 +55,10 @@ class GoogleSignInRationale : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             PDPApplicationTheme {
-                ShowRationaleUI(scope = lifecycleScope,
-                    navigateToHome = { navigateToHome()} )
+                ShowRationaleUI(
+                    scope = lifecycleScope,
+                    navigateToHome = { navigateToHome() },
+                    initGoogleLogin = { initGoogleLogin() })
             }
         }
     }
@@ -63,11 +69,41 @@ class GoogleSignInRationale : ComponentActivity() {
         startActivity(homeIntent)
         finish()
     }
+
+    // function to initiate google login
+    // launcher for the goolge authentication
+    private val googleSignInLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) Log.d(
+                "GoogleAuth", "Account picker returned successfully."
+            )
+            else Log.w("GoogleAuth", "Account picker was canceled.")
+        }
+
+    private fun initGoogleLogin() {
+        GoogleAuthUtils.initiateGoogleSignin(
+            context = this,
+            scope = lifecycleScope,
+            launcher = googleSignInLauncher,
+            googleLogin = {
+                runOnUiThread {
+                    val homeIntent = Intent(this, HomeActivity::class.java)
+                    startActivity(homeIntent)
+                    Toast.makeText(this, "Authentication Successfull", Toast.LENGTH_SHORT).show()
+                    finish()
+                }
+            })
+    }
+
 }
 
 // code for showing the permission rationale
 @Composable
-fun ShowRationaleUI(scope : CoroutineScope, navigateToHome : () -> Unit) {
+fun ShowRationaleUI(
+    scope: CoroutineScope,
+    navigateToHome: () -> Unit,
+    initGoogleLogin: () -> Unit
+) {
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -81,7 +117,7 @@ fun ShowRationaleUI(scope : CoroutineScope, navigateToHome : () -> Unit) {
             painter = painterResource(R.drawable.permission_rationale),
             contentDescription = "Rationale Image",
             modifier = Modifier
-                .fillMaxWidth(.9f)
+                .fillMaxWidth(.7f)
                 .wrapContentHeight(),
             contentScale = ContentScale.Fit
         )
@@ -89,19 +125,19 @@ fun ShowRationaleUI(scope : CoroutineScope, navigateToHome : () -> Unit) {
         Spacer(Modifier.height(20.dp))
 
         Text(
-            text = "Think Again !!", style = TextStyle(
+            text = "Think Again !", style = TextStyle(
                 color = colorResource(R.color.font_color),
-                fontSize = 32.sp,
+                fontSize = 30.sp,
                 fontWeight = FontWeight(500),
                 letterSpacing = 1.2.sp,
                 textAlign = TextAlign.Center
-            ), modifier = Modifier.height(50.dp)
+            )
         )
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(10.dp))
         RationaleDescription()
-        Spacer(Modifier.height(50.dp))
-        BottomNavigationButton(scope, navigateToHome)
+        Spacer(Modifier.height(20.dp))
+        BottomNavigationButton(scope, navigateToHome, initGoogleLogin)
     }
 }
 
@@ -114,13 +150,13 @@ fun RationaleDescription() {
         modifier = Modifier.fillMaxWidth()
     ) {
         Text(
-            text = "With Account you can ... ", style = TextStyle(
+            text = "With Account you can", style = TextStyle(
                 color = colorResource(R.color.font_color),
-                fontSize = 20.sp,
+                fontSize = 18.sp,
                 fontWeight = FontWeight(400),
                 letterSpacing = 1.2.sp,
-                textAlign = TextAlign.Start
-            ), modifier = Modifier.height(40.dp)
+                textAlign = TextAlign.Center
+            )
         )
 
         val descriptionList = populateSigningRationale()
@@ -134,13 +170,15 @@ fun RationaleDescription() {
                     .height(50.dp)
             ) {
                 Box(
-                    contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth(.2f)
+                    contentAlignment = Alignment.CenterEnd, modifier = Modifier.fillMaxWidth(.24f)
                 ) {
                     Icon(
                         imageVector = Icons.Default.CheckCircleOutline,
                         contentDescription = "Check Icon",
                         tint = Color.Green,
-                        modifier = Modifier.size(30.dp)
+                        modifier = Modifier
+                            .size(30.dp)
+                            .padding(end = 5.dp)
                     )
                 }
 
@@ -150,7 +188,7 @@ fun RationaleDescription() {
                     Text(
                         text = item.description.toString(), style = TextStyle(
                             color = colorResource(R.color.font_color),
-                            fontSize = 18.sp,
+                            fontSize = 15.sp,
                             fontWeight = FontWeight.Normal,
                             letterSpacing = 1.2.sp,
                             textAlign = TextAlign.Start
@@ -165,8 +203,11 @@ fun RationaleDescription() {
 
 // bottom buttons
 @Composable
-fun BottomNavigationButton(scope : CoroutineScope, navigateToHome : () -> Unit) {
-    val context = LocalContext.current
+fun BottomNavigationButton(
+    scope: CoroutineScope,
+    navigateToHome: () -> Unit,
+    initGoogleLogin: () -> Unit
+) {
 
     OutlinedButton(
         shape = RoundedCornerShape(16.dp), colors = ButtonColors(
@@ -177,42 +218,34 @@ fun BottomNavigationButton(scope : CoroutineScope, navigateToHome : () -> Unit) 
         ), onClick = {
             // go to the home activity
             navigateToHome()
-        }, modifier = Modifier.fillMaxWidth(.8f)
+        }, modifier = Modifier
+            .fillMaxWidth(.8f)
+            .height(50.dp)
     ) {
         Text(
             text = "I'll Do Later"
         )
     }
 
+    Spacer(Modifier.height(5.dp))
     OutlinedButton(
         shape = RoundedCornerShape(16.dp), colors = ButtonColors(
-            containerColor = colorResource(R.color.light_card_background),
+            containerColor = Color(175, 211, 241, 255),
             contentColor = colorResource(R.color.font_color),
             disabledContentColor = Color.Gray,
             disabledContainerColor = Color.LightGray
         ), onClick = {
             // start google signin intent
-            GoogleAuthUtils.initiateGoogleSignin(
-                context = context,
-                scope = scope,
-                launcher = (context as MainActivity).googleSignInLauncher,
-                googleLogin = {
-                    // Success action here
-                    navigateToHome()
-                }
-            )
-        }, modifier = Modifier.fillMaxWidth(.8f)
+            initGoogleLogin()
+        }, modifier = Modifier
+            .fillMaxWidth(.8f)
+            .height(50.dp)
     ) {
         Text(
             text = "Sign In"
         )
     }
 }
-
-// data class for the rational description
-data class SigninigRationale(
-    val description: String
-)
 
 // function to  get the sigini rational
 fun populateSigningRationale(): List<SigninigRationale> {

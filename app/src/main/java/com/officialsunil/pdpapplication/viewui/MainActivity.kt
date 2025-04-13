@@ -10,7 +10,7 @@ import android.view.animation.OvershootInterpolator
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -47,15 +47,12 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import com.officialsunil.pdpapplication.R
 import com.officialsunil.pdpapplication.ui.theme.PDPApplicationTheme
-import com.officialsunil.pdpapplication.utils.GoogleAccountPickerContract
 import com.officialsunil.pdpapplication.utils.GoogleAuthUtils
 import com.officialsunil.pdpapplication.utils.PdpModelController
 
 class MainActivity : ComponentActivity() {
     // give reference to the view model
     private val pdpModelController by viewModels<PdpModelController>()
-
-    internal lateinit var googleSignInLauncher: ActivityResultLauncher<Intent>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,18 +79,10 @@ class MainActivity : ComponentActivity() {
             }
 
         }
-
-        googleSignInLauncher = registerForActivityResult(GoogleAccountPickerContract()) { success ->
-            if (success) {
-                // Optional: Refresh or re-trigger login
-                Log.d("GoogleAuth", "Account picker returned successfully.")
-            }
-        }
-
         setContent {
             PDPApplicationTheme {
                 InitMainActivityUI(
-                    initSignInRationale = { initSignInRationale() },
+                    initGoogleSignin = { initGoogleSignin() },
                     initGoogleLogin = { initGoogleLogin() })
             }
         }
@@ -101,14 +90,28 @@ class MainActivity : ComponentActivity() {
 
     // backend logics
     // function to go to main activity
-    private fun initSignInRationale() {
-        val signInIntent = Intent(this, GoogleSignInRationale::class.java)
-        startActivity(signInIntent)
+    private fun initGoogleSignin() {
+        val rationaleIntent = Intent(this, GoogleSignInRationale::class.java)
+        startActivity(rationaleIntent)
+        finish()
     }
+
+    // function to initiate google login
+    // launcher for the goolge authentication
+    private val googleSignInLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) Log.d(
+                "GoogleAuth", "Account picker returned successfully."
+            )
+            else Log.w("GoogleAuth", "Account picker was canceled.")
+        }
 
     private fun initGoogleLogin() {
         GoogleAuthUtils.initiateGoogleSignin(
-            context = this, scope = lifecycleScope, launcher = googleSignInLauncher, googleLogin = {
+            context = this,
+            scope = lifecycleScope,
+            launcher = googleSignInLauncher,
+            googleLogin = {
                 runOnUiThread {
                     val homeIntent = Intent(this, HomeActivity::class.java)
                     startActivity(homeIntent)
@@ -120,21 +123,21 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun InitMainActivityUI(initSignInRationale: () -> Unit, initGoogleLogin: () -> Unit) {
+fun InitMainActivityUI(initGoogleSignin: () -> Unit, initGoogleLogin: () -> Unit) {
     Column(
         modifier = Modifier
             .background(color = colorResource(R.color.light_background))
             .fillMaxSize()
     ) {
-        Layout(initSignInRationale, initGoogleLogin)
+        Layout(initGoogleSignin, initGoogleLogin)
     }
 }
 
 @Composable
-fun Layout(navigateToHome: () -> Unit, initGoogleLogin: () -> Unit) {
+fun Layout(initGoogleSignin: () -> Unit, initGoogleLogin: () -> Unit) {
     Column {
         HeadingUI()
-        MainContainer(navigateToHome, initGoogleLogin)
+        MainContainer(initGoogleSignin, initGoogleLogin)
     }
 }
 
@@ -157,7 +160,7 @@ fun HeadingUI() {
 }
 
 @Composable
-fun MainContainer(initSigninRationale: () -> Unit, initGoogleLogin: () -> Unit) {
+fun MainContainer(initGoogleSignin: () -> Unit, initGoogleLogin: () -> Unit) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -254,7 +257,7 @@ fun MainContainer(initSigninRationale: () -> Unit, initGoogleLogin: () -> Unit) 
         Spacer(modifier = Modifier.height(25.dp))
         Button(
             onClick = {
-                initSigninRationale()
+                initGoogleSignin()
             },
             colors = ButtonColors(
                 containerColor = colorResource(id = R.color.light_background),
@@ -303,9 +306,3 @@ fun MainContainer(initSigninRationale: () -> Unit, initGoogleLogin: () -> Unit) 
 
     }
 }
-
-//@Preview(showBackground = true, showSystemUi = true)
-//@Composable
-//fun PreviewUI() {
-//    InitMainActivityUI()
-//}

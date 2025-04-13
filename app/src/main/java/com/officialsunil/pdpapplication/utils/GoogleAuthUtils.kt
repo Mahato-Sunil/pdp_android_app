@@ -79,10 +79,6 @@ class GoogleAuthUtils {
 
                         user?.let {
                             if (it.isAnonymous.not()) googleLogin.invoke()
-                            // If the user is successfully authenticated, invoke the callback
-//                                    Log.d(TAG, "Google Sign-In successful: ${it.email}")
-
-//                                    googleLogin.invoke()
                         } ?: run {
                             Log.e(TAG, "Google Sign-In failed: User is null")
                         }
