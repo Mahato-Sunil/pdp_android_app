@@ -7,7 +7,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 data class ProfileInformation(
     val icon : ImageVector,
     val title : String,
-    val description : String
+    val description : String,
+    val isContentEditable : Boolean
 )
 
 // data class for the rational description

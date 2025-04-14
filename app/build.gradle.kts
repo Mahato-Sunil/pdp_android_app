@@ -96,4 +96,7 @@ dependencies {
     implementation(libs.tensorflow.lite.task.vision)
     implementation(libs.tensorflow.lite.gpu)
 
+    //for coil (Coroutine Image Loader)
+    implementation(libs.coil.compose)
+
 }

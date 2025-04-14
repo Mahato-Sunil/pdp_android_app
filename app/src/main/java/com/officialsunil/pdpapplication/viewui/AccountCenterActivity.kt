@@ -12,6 +12,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -33,6 +35,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
@@ -42,14 +46,20 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -61,6 +71,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.officialsunil.pdpapplication.viewui.ui.theme.PDPApplicationTheme
 import com.officialsunil.pdpapplication.R
 import com.officialsunil.pdpapplication.utils.FirebaseUserCredentials
@@ -73,8 +84,7 @@ class AccountCenterActivity : ComponentActivity() {
         setContent {
             PDPApplicationTheme {
                 AccountCenterUI(
-                    navigateToHome = { navigateToHome() }
-                )
+                    navigateToHome = { navigateToHome() })
             }
         }
     }
@@ -85,14 +95,12 @@ class AccountCenterActivity : ComponentActivity() {
         startActivity(homeIntent)
         finish()
     }
-
 }
-
 
 // composable function
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun AccountCenterUI(navigateToHome : () -> Unit) {
+fun AccountCenterUI(navigateToHome: () -> Unit) {
     Scaffold(
         topBar = { AccountHeadingUI(navigateToHome) },
         modifier = Modifier
@@ -145,7 +153,9 @@ fun AccountHeadingUI(navigateToHome: () -> Unit) {
         HorizontalDivider(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(10.dp), thickness = 1.dp, color = Color.LightGray
+                .padding(10.dp),
+            thickness = 1.dp,
+            color = Color.LightGray
         )
     }
 }
@@ -166,6 +176,7 @@ fun AccountContainer() {
 @Composable
 fun AccountInformationContainer() {
     val profileInfo = getProfileInformation()
+
     if (profileInfo.isEmpty()) {
 
         Spacer(Modifier.height(20.dp))
@@ -181,9 +192,7 @@ fun AccountInformationContainer() {
 
         Spacer(Modifier.height(50.dp))
         Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .fillMaxSize()
+            contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()
         ) {
             Column(
                 verticalArrangement = Arrangement.spacedBy(50.dp),
@@ -208,8 +217,7 @@ fun AccountInformationContainer() {
                         disabledContainerColor = Color.LightGray
                     ), onClick = {
                         Log.d("AccountCenterActivity", "Account Center Button Clicked")
-                    },
-                    modifier = Modifier
+                    }, modifier = Modifier
                         .fillMaxWidth(.8f)
                         .height(50.dp)
                 ) {
@@ -221,22 +229,50 @@ fun AccountInformationContainer() {
 
         }
     } else {
+        val currentUsersCredentials = FirebaseUserCredentials.getCurrentUserCredentails()
+        val blankImageUrl =
+            "https://cdn.pixabay.com/photo/2016/04/22/04/57/graduation-1345143_1280.png"
+        val photoUrl = currentUsersCredentials?.photoUrl
+        val isEmailVerified = currentUsersCredentials?.isEmailVerified
 
-        profileInfo.forEach { profile ->
+        Spacer(Modifier.height(20.dp))
 
-            Spacer(Modifier.height(20.dp))
-
-            Image(
-                painter = painterResource(R.drawable.permission_rationale),
+        Box(
+            modifier = Modifier
+                .size(150.dp) // Same size as your image
+                .padding(8.dp)
+        ) {
+            // Profile image
+            AsyncImage(
+                model = photoUrl ?: blankImageUrl,
                 contentDescription = "Profile Image",
-                contentScale = ContentScale.Fit,
+                contentScale = ContentScale.Crop,
+                filterQuality = FilterQuality.High,
                 modifier = Modifier
                     .size(150.dp)
-                    .clip(shape = CircleShape)
-                    .border(2.dp, shape = CircleShape, color = Color.Black)
+                    .clip(CircleShape)
+                    .border(2.dp, color = Color.Black, shape = CircleShape)
             )
 
-            Spacer(Modifier.height(50.dp))
+            // Green tick overlay at bottom-right
+            if (isEmailVerified.toString() == "true") {
+                Image(
+                    painter = painterResource(R.drawable.verified_tick),
+                    contentDescription = "Verified",
+                    modifier = Modifier
+                        .size(28.dp)
+                        .align(Alignment.BottomEnd)
+                        .offset(x = (-8).dp, y = (-4).dp),
+                    contentScale = ContentScale.Fit
+                )
+            }
+        }
+
+        Spacer(Modifier.height(50.dp))
+        profileInfo.forEach { profile ->
+            var isEditable by remember { mutableStateOf(false) }
+            var editedValue by remember { mutableStateOf(profile.description) }
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -250,7 +286,11 @@ fun AccountInformationContainer() {
                         .fillMaxWidth()
                         .wrapContentHeight()
                         .background(Color.White)
-                ) {
+                        .clickable(enabled = profile.isContentEditable) {
+                            if (profile.isContentEditable) {
+                                isEditable = true
+                            }
+                        }) {
                     Icon(
                         imageVector = profile.icon,
                         contentDescription = "Profile Icons",
@@ -276,22 +316,41 @@ fun AccountInformationContainer() {
                             )
                         )
 
-
-                        Text(
-                            text = profile.description,
-                            textAlign = TextAlign.Start,
-                            style = TextStyle(
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Normal,
-                                letterSpacing = 1.2.sp
+                        if (isEditable) {
+                            OutlinedTextField(
+                                value = editedValue,
+                                onValueChange = { editedValue = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true,
+                                textStyle = TextStyle(
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Normal,
+                                    letterSpacing = 1.2.sp
+                                ),
+                                trailingIcon = {
+                                    IconButton(
+                                        onClick = { isEditable = false }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "Save",
+                                        )
+                                    }
+                                })
+                        } else {
+                            Text(
+                                text = editedValue, textAlign = TextAlign.Start, style = TextStyle(
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Normal,
+                                    letterSpacing = 1.2.sp
+                                )
                             )
-                        )
+                        }
                     }
-                }
 
-                HorizontalDivider(
-                    modifier = Modifier.padding(5.dp), thickness = 1.dp, color = Color.LightGray
-                )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(5.dp), thickness = 1.dp, color = Color.LightGray
+                    )
+                }
             }
         }
     }
@@ -303,24 +362,16 @@ fun getProfileInformation(): List<ProfileInformation> {
     return currentUsersCredentials?.let { user ->
         listOf(
             ProfileInformation(
-                icon = Icons.Default.Person,
-                title = "Name",
-                description = user.name
-            ),
-            ProfileInformation(
+                icon = Icons.Default.Person, title = "Name", description = user.name, false
+            ), ProfileInformation(
                 icon = Icons.Default.Info,
                 title = "About",
-                description = "Self Learned Developer"
-            ),
-            ProfileInformation(
-                icon = Icons.Default.Phone,
-                title = "Contact",
-                description = user.phone
-            ),
-            ProfileInformation(
-                icon = Icons.Default.Email,
-                title = "Email",
-                description = user.email
+                description = "Self Learned Developer",
+                true
+            ), ProfileInformation(
+                icon = Icons.Default.Phone, title = "Contact", description = user.phone, true
+            ), ProfileInformation(
+                icon = Icons.Default.Email, title = "Email", description = user.email, true
             )
         )
     } ?: emptyList()

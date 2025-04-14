@@ -1,5 +1,6 @@
 package com.officialsunil.pdpapplication.viewui
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -7,11 +8,14 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,6 +25,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
@@ -35,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -44,6 +50,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -59,8 +66,7 @@ class HomeActivity : ComponentActivity() {
             PDPApplicationTheme {
                 InitHomeActivityUI(
                     initCameraActivity = { navigateToCameraActivity() },
-                    initAccountCenter = { navigateToAccountCenter() }
-                )
+                    initAccountCenter = { navigateToAccountCenter() })
             }
         }
     }
@@ -87,16 +93,17 @@ class HomeActivity : ComponentActivity() {
 //  activity layout
 @Composable
 fun InitHomeActivityUI(
-    initCameraActivity: () -> Unit,
-    initAccountCenter : () -> Unit ) {
-    Scaffold(
-        topBar = { HomeHeadingUI() },
-        bottomBar = { HomeButtonContainer(initCameraActivity, initAccountCenter) }) { innerPadding ->
+    initCameraActivity: () -> Unit, initAccountCenter: () -> Unit
+) {
+    Scaffold(topBar = { HomeHeadingUI() }, bottomBar = {
+        HomeButtonContainer(
+            initCameraActivity, initAccountCenter
+        )
+    }) { innerPadding ->
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(20.dp),
             modifier = Modifier
-               .padding(innerPadding)
+                .padding(innerPadding)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
@@ -142,11 +149,9 @@ fun HomeContainer() {
     val localContext = LocalContext.current
 
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy (10.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .systemBarsPadding()
+            .background(Color.White)
     ) {
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -245,29 +250,37 @@ fun HomeContainer() {
 // bottom section
 @Composable
 fun HomeButtonContainer(
-    initCameraActivity: () -> Unit,
-    initAccountCenter: () -> Unit) {
+    initCameraActivity: () -> Unit, initAccountCenter: () -> Unit
+) {
+    val context = LocalContext.current
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceEvenly,
         modifier = Modifier
+            .systemBarsPadding()
             .fillMaxWidth()
             .height(100.dp)
-            .offset(y = (-30.dp))
-            .background(colorResource(R.color.extra_light_card_background))
+            .background(colorResource(R.color.light_background))
     ) {
         //home
         IconButton(
             onClick = {
-
+                val currentActivity = context as? Activity
+                if (currentActivity !is HomeActivity) {
+                    val intent = Intent(context, HomeActivity::class.java)
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                    context.startActivity(intent)
+                }
             },
         ) {
             Icon(
                 imageVector = Icons.Default.House,
                 contentDescription = "Home Icon",
-                tint = colorResource(R.color.font_color),
-                modifier = Modifier.fillMaxSize()
+                tint = Color(68, 92, 182, 255),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(221, 202, 255, 255))
             )
         }
 
@@ -296,10 +309,13 @@ fun HomeButtonContainer(
     }
 }
 
-//@Preview(showBackground = true, showSystemUi = true)
-//@Composable
-//fun PreviewUI() {
-//    InitHomeActivityUI(
-//        initCameraActivity = { })
-//}
-
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun PreviewHomeActivityUI() {
+    PDPApplicationTheme {
+        InitHomeActivityUI(
+            initCameraActivity = { /* Dummy preview action */ },
+            initAccountCenter = { /* Dummy preview action */ }
+        )
+    }
+}
