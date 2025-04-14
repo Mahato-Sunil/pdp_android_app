@@ -34,7 +34,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Email
@@ -76,6 +78,7 @@ import com.officialsunil.pdpapplication.viewui.ui.theme.PDPApplicationTheme
 import com.officialsunil.pdpapplication.R
 import com.officialsunil.pdpapplication.utils.FirebaseUserCredentials
 import com.officialsunil.pdpapplication.utils.ProfileInformation
+import com.officialsunil.pdpapplication.utils.UserProfileSettings
 
 class AccountCenterActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -352,6 +355,41 @@ fun AccountInformationContainer() {
                     )
                 }
             }
+
+            //profile setting and other items
+            ProfileSettingsUI()
+        }
+    }
+}
+
+// profile settings ui
+@Composable
+fun ProfileSettingsUI() {
+    val items = getSettingItems()
+    items.forEach { item ->
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
+                .background(Color.LightGray)
+        ) {
+            Text(
+                text = item.title,
+                style = TextStyle(
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Normal,
+                    letterSpacing = 1.2.sp
+                )
+            )
+
+            Image(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                contentDescription = "Forward Arrow",
+                modifier = Modifier.size(20.dp)
+            )
+
         }
     }
 }
@@ -375,4 +413,13 @@ fun getProfileInformation(): List<ProfileInformation> {
             )
         )
     } ?: emptyList()
+}
+
+// function to populate the other settings
+fun getSettingItems(): List<UserProfileSettings> {
+    return listOf(
+        UserProfileSettings("Statistics"),
+        UserProfileSettings("Log Out"),
+        UserProfileSettings("About Developer")
+    )
 }

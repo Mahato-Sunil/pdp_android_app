@@ -8,7 +8,9 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -41,65 +43,21 @@ class Test : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            PDPApplicationTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting2(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
-            }
         }
     }
 }
 
 @Composable
-fun Greeting2(name: String, modifier: Modifier = Modifier) {
-//    val currentUsersCredentials = FirebaseUserCredentials.getCurrentUserCredentails()
-//
-//    val blankImageUrl = "https://cdn.pixabay.com/photo/2016/04/22/04/57/graduation-1345143_1280.png"
-//    val photoUrl = currentUsersCredentials?.photoUrl
-//    val isEmailVerified = currentUsersCredentials?.isEmailVerified
-
-    Spacer(Modifier.height(20.dp))
-
-    Box(
-        modifier = Modifier
-            .size(150.dp) // Same size as your image
-            .padding(8.dp)
-    ) {
-        // Profile image
-        Image(
-            painter = painterResource(R.drawable.permission_rationale),
-            contentDescription = "Profile Image",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxSize()
-                .clip(CircleShape)
-                .border(2.dp, color = Color.Black, shape = CircleShape)
-        )
-
-        // Green tick overlay at bottom-right
-        Icon(
-            imageVector = Icons.Default.CheckCircle,
-            contentDescription = "Verified",
-            tint = Color.White,
-            modifier = Modifier
-                .size(28.dp)
-                .align(Alignment.BottomEnd)
-                .offset(x = (-8).dp, y = (-4).dp)
-                .background(Color.Green, CircleShape)
-        )
-    }
+fun Greeting2() {
 
 
-    Spacer(Modifier.height(50.dp))
 }
 
-@Preview(showBackground = true)
+
+@Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun GreetingPreview2() {
     PDPApplicationTheme {
-        Greeting2("Android")
+        Greeting2()
     }
 }

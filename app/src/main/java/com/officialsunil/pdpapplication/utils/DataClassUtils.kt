@@ -24,5 +24,9 @@ data class CurrentUserCredentials(
     val phone : String ,
     val photoUrl : String,
     val isEmailVerified : Boolean
+)
 
+// for the user profile settings
+data class UserProfileSettings(
+    val title : String,
 )
