@@ -2,6 +2,8 @@ package com.officialsunil.pdpapplication.utils
 
 // all the data class to be stored here
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.input.KeyboardType
 
 // create a data class for the account information section
 data class ProfileInformation(
@@ -30,3 +32,13 @@ data class CurrentUserCredentials(
 data class UserProfileSettings(
     val title : String,
 )
+
+//for registration activity
+data class RegistrationCredentials(
+    val key : String,
+    val heading : String,
+    val placeholder: String,
+    val inputType : KeyboardType
+)
+
+

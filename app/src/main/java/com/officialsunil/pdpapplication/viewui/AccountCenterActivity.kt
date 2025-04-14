@@ -73,6 +73,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import com.officialsunil.pdpapplication.viewui.ui.theme.PDPApplicationTheme
 import com.officialsunil.pdpapplication.R
@@ -238,6 +239,15 @@ fun AccountInformationContainer() {
         val photoUrl = currentUsersCredentials?.photoUrl
         val isEmailVerified = currentUsersCredentials?.isEmailVerified
 
+        val finalPhoto = if (photoUrl?.toString().isNullOrBlank()) {
+            blankImageUrl
+        } else {
+            photoUrl.toString()
+        }
+
+        Log.e("Photo URL used", finalPhoto)
+
+        Log.e("Photo ", "$photoUrl")
         Spacer(Modifier.height(20.dp))
 
         Box(
@@ -247,13 +257,14 @@ fun AccountInformationContainer() {
         ) {
             // Profile image
             AsyncImage(
-                model = photoUrl ?: blankImageUrl,
+                model = finalPhoto,
                 contentDescription = "Profile Image",
                 contentScale = ContentScale.Crop,
                 filterQuality = FilterQuality.High,
                 modifier = Modifier
                     .size(150.dp)
                     .clip(CircleShape)
+                    .zIndex(1f)
                     .border(2.dp, color = Color.Black, shape = CircleShape)
             )
 
@@ -355,16 +366,21 @@ fun AccountInformationContainer() {
                     )
                 }
             }
-
-            //profile setting and other items
-            ProfileSettingsUI()
         }
+        //profile setting and other items
+        ProfileSettingsUI()
     }
 }
 
 // profile settings ui
 @Composable
 fun ProfileSettingsUI() {
+    HorizontalDivider(
+        thickness = 1.dp,
+        color = Color.LightGray,
+        modifier = Modifier.padding(vertical = 10.dp)
+
+    )
     val items = getSettingItems()
     items.forEach { item ->
         Row(
@@ -372,8 +388,8 @@ fun ProfileSettingsUI() {
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier
                 .fillMaxWidth()
+                .height(60.dp)
                 .padding(8.dp)
-                .background(Color.LightGray)
         ) {
             Text(
                 text = item.title,
@@ -391,6 +407,12 @@ fun ProfileSettingsUI() {
             )
 
         }
+
+        HorizontalDivider(
+            thickness = 1.dp,
+            color    = Color.LightGray,
+            modifier = Modifier.padding(vertical = 10.dp)
+        )
     }
 }
 
