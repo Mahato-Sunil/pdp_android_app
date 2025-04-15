@@ -31,6 +31,7 @@ data class CurrentUserCredentials(
 // for the user profile settings
 data class UserProfileSettings(
     val title : String,
+    val function : String
 )
 
 //for registration activity

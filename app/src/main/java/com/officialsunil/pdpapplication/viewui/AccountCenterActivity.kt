@@ -77,9 +77,11 @@ import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import com.officialsunil.pdpapplication.viewui.ui.theme.PDPApplicationTheme
 import com.officialsunil.pdpapplication.R
+import com.officialsunil.pdpapplication.utils.EmailAuthUtils
 import com.officialsunil.pdpapplication.utils.FirebaseUserCredentials
 import com.officialsunil.pdpapplication.utils.ProfileInformation
 import com.officialsunil.pdpapplication.utils.UserProfileSettings
+import kotlin.jvm.java
 
 class AccountCenterActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -88,25 +90,30 @@ class AccountCenterActivity : ComponentActivity() {
         setContent {
             PDPApplicationTheme {
                 AccountCenterUI(
-                    navigateToHome = { navigateToHome() })
+                    navigateTo = { destination -> navigateTo(destination) })
             }
         }
     }
 
-    // function to go to the home activity
-    fun navigateToHome() {
-        val homeIntent = Intent(this, HomeActivity::class.java)
-        startActivity(homeIntent)
-        finish()
+    fun navigateTo(destination: String) {
+        val intent = when (destination) {
+            "home" -> Intent(this, HomeActivity::class.java)
+            "statistics" -> Intent(this, StatisticsActivity::class.java)
+            "about" -> Intent(this, AboutActivity::class.java)
+            "register" -> Intent(this, MainActivity::class.java)
+            else -> Intent(this, AccountCenterActivity::class.java)
+        }
+        startActivity(intent)
+        if (destination == "home") finish()
     }
 }
 
 // composable function
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun AccountCenterUI(navigateToHome: () -> Unit) {
+fun AccountCenterUI(navigateTo: (String) -> Unit) {
     Scaffold(
-        topBar = { AccountHeadingUI(navigateToHome) },
+        topBar = { AccountHeadingUI(navigateTo) },
         modifier = Modifier
             .systemBarsPadding()
             .background(colorResource(R.color.light_background))
@@ -121,13 +128,13 @@ fun AccountCenterUI(navigateToHome: () -> Unit) {
                 .systemBarsPadding()
                 .verticalScroll(rememberScrollState())
         ) {
-            AccountContainer()
+            AccountContainer(navigateTo)
         }
     }
 }
 
 @Composable
-fun AccountHeadingUI(navigateToHome: () -> Unit) {
+fun AccountHeadingUI(navigateTo: (String) -> Unit) {
     Column {
         Row(
             horizontalArrangement = Arrangement.spacedBy(15.dp),
@@ -139,7 +146,7 @@ fun AccountHeadingUI(navigateToHome: () -> Unit) {
         ) {
             IconButton(
                 onClick = {
-                    navigateToHome()
+                    navigateTo("home")
                 }) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -165,7 +172,7 @@ fun AccountHeadingUI(navigateToHome: () -> Unit) {
 }
 
 @Composable
-fun AccountContainer() {
+fun AccountContainer(navigateTo: (String) -> Unit) {
     Column(
 //        verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -173,12 +180,12 @@ fun AccountContainer() {
             .fillMaxSize()
             .padding(8.dp)
     ) {
-        AccountInformationContainer()
+        AccountInformationContainer(navigateTo)
     }
 }
 
 @Composable
-fun AccountInformationContainer() {
+fun AccountInformationContainer(navigateTo: (String) -> Unit) {
     val profileInfo = getProfileInformation()
 
     if (profileInfo.isEmpty()) {
@@ -220,13 +227,13 @@ fun AccountInformationContainer() {
                         disabledContentColor = Color.Gray,
                         disabledContainerColor = Color.LightGray
                     ), onClick = {
-                        Log.d("AccountCenterActivity", "Account Center Button Clicked")
+                        navigateTo("register")
                     }, modifier = Modifier
                         .fillMaxWidth(.8f)
                         .height(50.dp)
                 ) {
                     Text(
-                        text = "Sign Up Now"
+                        text = "Sign In Now"
                     )
                 }
             }
@@ -368,17 +375,17 @@ fun AccountInformationContainer() {
             }
         }
         //profile setting and other items
-        ProfileSettingsUI()
+        ProfileSettingsUI(navigateTo)
     }
 }
 
 // profile settings ui
 @Composable
-fun ProfileSettingsUI() {
+fun ProfileSettingsUI(navigateTo: (String) -> Unit) {
+    val context = LocalContext.current
+
     HorizontalDivider(
-        thickness = 1.dp,
-        color = Color.LightGray,
-        modifier = Modifier.padding(vertical = 10.dp)
+        thickness = 1.dp, color = Color.LightGray, modifier = Modifier.padding(vertical = 10.dp)
 
     )
     val items = getSettingItems()
@@ -390,13 +397,18 @@ fun ProfileSettingsUI() {
                 .fillMaxWidth()
                 .height(60.dp)
                 .padding(8.dp)
-        ) {
+                .clickable {
+                    Log.d("AccountCenterActivity", "Account Center Button Clicked")
+                    when (item.function.lowercase()) {
+                        "statistics" -> navigateTo("statistics")
+                        "logout" -> EmailAuthUtils.signOut(context)
+                        "about" -> navigateTo("about")
+                        else -> ""
+                    }
+                }) {
             Text(
-                text = item.title,
-                style = TextStyle(
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Normal,
-                    letterSpacing = 1.2.sp
+                text = item.title, style = TextStyle(
+                    fontSize = 16.sp, fontWeight = FontWeight.Normal, letterSpacing = 1.2.sp
                 )
             )
 
@@ -409,9 +421,7 @@ fun ProfileSettingsUI() {
         }
 
         HorizontalDivider(
-            thickness = 1.dp,
-            color    = Color.LightGray,
-            modifier = Modifier.padding(vertical = 10.dp)
+            thickness = 1.dp, color = Color.LightGray, modifier = Modifier.padding(vertical = 10.dp)
         )
     }
 }
@@ -440,8 +450,8 @@ fun getProfileInformation(): List<ProfileInformation> {
 // function to populate the other settings
 fun getSettingItems(): List<UserProfileSettings> {
     return listOf(
-        UserProfileSettings("Statistics"),
-        UserProfileSettings("Log Out"),
-        UserProfileSettings("About Developer")
+        UserProfileSettings("Statistics", "statistics"),
+        UserProfileSettings("Log Out", "logout"),
+        UserProfileSettings("About Developer", "about")
     )
 }

@@ -66,10 +66,10 @@ import androidx.compose.ui.unit.sp
 import androidx.core.animation.doOnEnd
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
+import com.google.firebase.auth.FirebaseAuth
 import com.officialsunil.pdpapplication.R
 import com.officialsunil.pdpapplication.ui.theme.PDPApplicationTheme
 import com.officialsunil.pdpapplication.utils.EmailAuthUtils
-import com.officialsunil.pdpapplication.utils.EmailAuthUtils.navigateToRegistrationActivity
 import com.officialsunil.pdpapplication.utils.GoogleAuthUtils
 import com.officialsunil.pdpapplication.utils.PdpModelController
 
@@ -78,44 +78,55 @@ class MainActivity : ComponentActivity() {
     private val pdpModelController by viewModels<PdpModelController>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Check if splash should be skipped
+        val skipSplash = intent.getBooleanExtra("SKIP_SPLASH", false)
+
         super.onCreate(savedInstanceState)
-        installSplashScreen().apply {
-            setKeepOnScreenCondition {
-                !pdpModelController.isModelReady.value
+        if (!skipSplash) {
+            installSplashScreen().apply {
+                setKeepOnScreenCondition {
+                    !pdpModelController.isModelReady.value
+                }
+
+                setOnExitAnimationListener { screen ->
+                    val zoomX = ObjectAnimator.ofFloat(screen.iconView, View.SCALE_X, 1f, 0.0f)
+                    val zoomY = ObjectAnimator.ofFloat(screen.iconView, View.SCALE_Y, 1f, 0.0f)
+
+                    zoomX.interpolator = OvershootInterpolator()
+                    zoomY.interpolator = OvershootInterpolator()
+
+                    zoomX.duration = 500L
+                    zoomY.duration = 500L
+
+                    val animatorSet = AnimatorSet()
+                    animatorSet.playTogether(zoomX, zoomY)
+
+                    animatorSet.doOnEnd { screen.remove() }
+                    animatorSet.start() // Start the animations
+                }
+
             }
-
-            setOnExitAnimationListener { screen ->
-                val zoomX = ObjectAnimator.ofFloat(screen.iconView, View.SCALE_X, 1f, 0.0f)
-                val zoomY = ObjectAnimator.ofFloat(screen.iconView, View.SCALE_Y, 1f, 0.0f)
-
-                zoomX.interpolator = OvershootInterpolator()
-                zoomY.interpolator = OvershootInterpolator()
-
-                zoomX.duration = 500L
-                zoomY.duration = 500L
-
-                val animatorSet = AnimatorSet()
-                animatorSet.playTogether(zoomX, zoomY)
-
-                animatorSet.doOnEnd { screen.remove() }
-                animatorSet.start() // Start the animations
-            }
-
         }
+
         setContent {
             PDPApplicationTheme {
-                InitMainActivityUI(
-                    context = this,
-                    activity = this,
-                    initGoogleSignin = { initGoogleSigninRationale() },
-                    initGoogleLogin = { initGoogleLogin() },
-                    initEmailPasswordSignin = { email, password ->
-                        initEmailPasswordSignin(
-                            email,
-                            password
-                        )
-                    }
-                )
+
+                if (isUserLoggedIn()) {
+                    val homeIntent = Intent(this, HomeActivity::class.java)
+                    startActivity(homeIntent)
+                    finish()
+                } else {
+                    InitMainActivityUI(
+                        context = this,
+                        activity = this,
+                        initGoogleSignin = { initGoogleSigninRationale() },
+                        initGoogleLogin = { initGoogleLogin() },
+                        initEmailPasswordSignin = { email, password ->
+                            initEmailPasswordSignin(
+                                email, password
+                            )
+                        })
+                }
             }
         }
     }
@@ -130,13 +141,11 @@ class MainActivity : ComponentActivity() {
                 navigateToHome()
             },
             onFailure = { exception ->
+                Toast.makeText(this, "Please Enter Correct Credentials", Toast.LENGTH_SHORT).show()
                 Log.e("Auth", "Failed to login", exception)
-            }
-        )
-
+            })
     }
 
-    // function to go to main activity
     private fun initGoogleSigninRationale() {
         val rationaleIntent = Intent(this, GoogleSignInRationale::class.java)
         startActivity(rationaleIntent)
@@ -165,6 +174,12 @@ class MainActivity : ComponentActivity() {
                     navigateToHome()
                 }
             })
+    }
+
+    private fun isUserLoggedIn(): Boolean {
+        val auth = FirebaseAuth.getInstance()
+        val user = auth.getCurrentUser()
+        return user != null
     }
 }
 
@@ -259,54 +274,41 @@ fun MainContainer(
 
         // custom email and password login
         OutlinedTextField(
-            value = emailInpt,
-            onValueChange = {
+            value = emailInpt, onValueChange = {
                 emailInpt = it
                 isChanged = true
-            },
-            modifier = Modifier.fillMaxWidth(.95f),
-            singleLine = true,
-            textStyle = TextStyle(
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Normal,
-                letterSpacing = 1.2.sp
-            ),
-            placeholder = {
+            }, modifier = Modifier.fillMaxWidth(.95f), singleLine = true, textStyle = TextStyle(
+                fontSize = 14.sp, fontWeight = FontWeight.Normal, letterSpacing = 1.2.sp
+            ), placeholder = {
                 Text(
                     text = "Email",
                     color = Color.Gray,
                 )
-            },
-            trailingIcon = {
-                if (isChanged)
-                    IconButton(
-                        onClick = { emailInpt = "" }) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "close icon",
-                        )
-                    }
-            },
-            shape = RoundedCornerShape(20.dp),
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Email,
-                imeAction = ImeAction.Next
+            }, trailingIcon = {
+                if (isChanged) IconButton(
+                    onClick = { emailInpt = "" }) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "close icon",
+                    )
+                }
+            }, shape = RoundedCornerShape(20.dp), keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Email, imeAction = ImeAction.Next
             )
         )
 
         Spacer(Modifier.height(10.dp))
 
         OutlinedTextField(
-            value = passwordInpt, onValueChange = {
+            value = passwordInpt,
+            onValueChange = {
                 passwordInpt = it
                 isChanged = true
             },
             modifier = Modifier.fillMaxWidth(.95f),
             singleLine = true,
             textStyle = TextStyle(
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Normal,
-                letterSpacing = 1.2.sp
+                fontSize = 14.sp, fontWeight = FontWeight.Normal, letterSpacing = 1.2.sp
             ),
             placeholder = {
                 Text(
@@ -326,8 +328,7 @@ fun MainContainer(
             },
             shape = RoundedCornerShape(20.dp),
             keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Password,
-                imeAction = ImeAction.Next
+                keyboardType = KeyboardType.Password, imeAction = ImeAction.Next
             )
         )
 
@@ -360,9 +361,7 @@ fun MainContainer(
 
                 text = "Sign in",
                 style = TextStyle(
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight(700),
-                    letterSpacing = 1.2.sp
+                    fontSize = 14.sp, fontWeight = FontWeight(700), letterSpacing = 1.2.sp
                 ),
                 textAlign = TextAlign.Center,
                 modifier = Modifier
@@ -375,16 +374,13 @@ fun MainContainer(
         Text(
             text = "Create New Account",
             style = TextStyle(
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Normal,
-                letterSpacing = 1.2.sp
+                fontSize = 16.sp, fontWeight = FontWeight.Normal, letterSpacing = 1.2.sp
             ),
             textDecoration = TextDecoration.Underline,
             color = Color.Blue,
             modifier = Modifier.clickable {
                 EmailAuthUtils.navigateToRegistrationActivity(context, activity)
-            }
-        )
+            })
 
         Spacer(modifier = Modifier.height(80.dp))
 

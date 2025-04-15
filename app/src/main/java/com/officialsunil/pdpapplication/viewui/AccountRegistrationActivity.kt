@@ -13,6 +13,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -36,10 +37,12 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults.contentPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -47,6 +50,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -56,11 +60,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
 import com.officialsunil.pdpapplication.R
 import com.officialsunil.pdpapplication.utils.EmailAuthUtils
+import com.officialsunil.pdpapplication.utils.EmailAuthUtils.checkCredentials
 import com.officialsunil.pdpapplication.utils.GoogleAuthUtils
 import com.officialsunil.pdpapplication.utils.RegistrationCredentials
 import com.officialsunil.pdpapplication.viewui.ui.theme.PDPApplicationTheme
@@ -151,27 +157,18 @@ fun AccountRegistrationUI(
 @Composable
 fun AccountHeaderUI() {
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalAlignment = Alignment.Start,
     ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(20.dp),
-            verticalAlignment = Alignment.CenterVertically,
+        Text(
+            text = "Create New Account",
+            style = TextStyle(
+                fontWeight = FontWeight.SemiBold, fontSize = 22.sp, letterSpacing = 1.2.sp
+            ),
+            textAlign = TextAlign.Start,
             modifier = Modifier
-                .fillMaxWidth()
-                .height(80.dp)
-                .background(colorResource(R.color.light_background))
-        ) {
-            Text(
-                text = "Create New Account",
-                style = TextStyle(
-                    fontWeight = FontWeight.SemiBold, fontSize = 22.sp, letterSpacing = 1.2.sp
-                ),
-                textAlign = TextAlign.Start,
-                modifier = Modifier
-                    .wrapContentSize()
-                    .padding(start = 16.dp)
-            )
-        }
+                .wrapContentSize()
+                .padding(start = 16.dp, 14.dp)
+        )
 
         HorizontalDivider(
             modifier = Modifier
@@ -187,35 +184,36 @@ fun AccountHeaderUI() {
 fun FormContentUI(
     initiateGoogleSignin: () -> Unit, initiateEmailSignin: (String, String, String) -> Unit
 ) {
-//    var inputField by remember { mutableStateOf("") }
-    var isChanged by remember { mutableStateOf(false) }
-    var passwordVisible by remember { mutableStateOf(false) }
-
+    val context = LocalContext.current
+    val passwordVisibleMap = remember { mutableStateMapOf<String, Boolean>() }
+    val isChangedMap = remember { mutableStateMapOf<String, Boolean>() }
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
 
-
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(10.dp)
             .background(Color.White)
     ) {
         val formContent = getFormUI()
         formContent.forEach { item ->
+            val key = item.key.lowercase()
+            val isChanged = isChangedMap[key] ?: false
+            val passwordVisible = passwordVisibleMap[key] ?: false
 
             Text(
                 text = item.heading,
                 style = TextStyle(
-                    fontWeight = FontWeight.Normal, fontSize = 18.sp, letterSpacing = 1.2.sp
+                    fontWeight = FontWeight.Normal, fontSize = 16.sp, letterSpacing = 1.2.sp
                 ),
                 textAlign = TextAlign.Start,
                 modifier = Modifier
-                    .padding(8.dp)
+                    .padding(6.dp)
                     .align(Alignment.Start)
             )
 
@@ -226,29 +224,37 @@ fun FormContentUI(
                     "password" -> password
                     "confirmpassword" -> confirmPassword
                     else -> ""
-                }, onValueChange = {
-                    when (item.key.lowercase()) {
+                },
+                onValueChange = {
+                    when (key) {
                         "name" -> name = it
                         "email" -> email = it
                         "password" -> password = it
                         "confirmpassword" -> confirmPassword = it
                     }
-                    isChanged = true
-                }, modifier = Modifier.fillMaxWidth(.95f), singleLine = true, textStyle = TextStyle(
-                    fontSize = 14.sp, fontWeight = FontWeight.Normal, letterSpacing = 1.2.sp
-                ), placeholder = {
+                    isChangedMap[key] = true
+                },
+                modifier = Modifier
+                    .fillMaxWidth(.95f)
+                    .padding(1.dp)
+                    .height(50.dp),
+                singleLine = true,
+                textStyle = TextStyle(
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Normal,
+                    letterSpacing = 1.2.sp
+                ),
+                placeholder = {
                     Text(
                         text = item.placeholder,
                         color = Color.Gray,
                     )
                 },
-
                 visualTransformation = if (item.inputType != KeyboardType.Password) VisualTransformation.None
-                else if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-
+                else if (passwordVisible) VisualTransformation.None
+                else PasswordVisualTransformation(),
                 trailingIcon = {
                     if (isChanged) {
-                        //for password icons
                         val icon = if (item.inputType != KeyboardType.Password) Icons.Default.Close
                         else {
                             if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
@@ -256,32 +262,55 @@ fun FormContentUI(
 
                         IconButton(
                             onClick = {
-                                if (item.inputType != KeyboardType.Password) when (item.key.lowercase()) {
-                                    "name" -> name = ""
-                                    "email" -> email = ""
-                                    "password" -> password = ""
-                                    "confirmpassword" -> confirmPassword = ""
+                                if (item.inputType != KeyboardType.Password) {
+                                    when (key) {
+                                        "name" -> name = ""
+                                        "email" -> email = ""
+                                        "password" -> password = ""
+                                        "confirmpassword" -> confirmPassword = ""
+                                    }
+                                    isChangedMap[key] = false
+                                } else {
+                                    passwordVisibleMap[key] = !passwordVisible
                                 }
-                                else passwordVisible != passwordVisible
                             }) {
-                            Icon(
-                                imageVector = icon, contentDescription = item.heading
-                            )
+                            Icon(imageVector = icon, contentDescription = item.heading)
                         }
                     }
                 },
-
-                shape = RoundedCornerShape(20.dp), keyboardOptions = KeyboardOptions(
+                shape = RoundedCornerShape(20.dp),
+                keyboardOptions = KeyboardOptions(
                     keyboardType = item.inputType, imeAction = ImeAction.Next
+                ),
+
                 )
-            )
         }
 
         // buttons
+        Spacer(Modifier.height(20.dp))
         Button(
             onClick = {
-                initiateEmailSignin(name, email, password)
+                checkCredentials(
+                    name = name,
+                    email = email,
+                    password = password,
+                    confirmPassword = confirmPassword,
+                    onSuccess = {
+                        initiateEmailSignin(name, email, confirmPassword)
+                    },
+
+                    onFailure = { errorList ->
+                        if (errorList.isNotEmpty()) {
+                            Toast.makeText(
+                                context,
+                                errorList.first(), // ✅ Only show the first error
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }
+                )
             },
+
             colors = ButtonColors(
                 containerColor = Color(105, 146, 255, 255),
                 contentColor = Color.White,
@@ -358,15 +387,16 @@ fun FormContentUI(
             )
 
             // vertical spacer
-            Spacer(modifier = Modifier.width(21.dp))
+            Spacer(modifier = Modifier.width(15.dp))
             Text(
                 text = "Continue With Google", style = TextStyle(
                     fontSize = 12.sp,
                     fontWeight = FontWeight(700),
                     color = colorResource(id = R.color.font_color),
                 ), modifier = Modifier
-                    .fillMaxWidth()
-                    .align(alignment = Alignment.CenterVertically)
+                    .fillMaxWidth(.8f)
+                    .align(alignment = Alignment.CenterVertically),
+                textAlign = TextAlign.Center
             )
         }
     }
@@ -377,15 +407,24 @@ fun FormContentUI(
 fun getFormUI(): List<RegistrationCredentials> {
     return listOf(
         RegistrationCredentials(
-           key = "name", heading = "Full Name", placeholder = "Full Name", inputType = KeyboardType.Text
+            key = "name",
+            heading = "Full Name",
+            placeholder = "Full Name",
+            inputType = KeyboardType.Text
         ),
 
         RegistrationCredentials(
-            key = "email", heading = "Email", placeholder = "Email Id", inputType = KeyboardType.Email
+            key = "email",
+            heading = "Email",
+            placeholder = "Email Id",
+            inputType = KeyboardType.Email
         ),
 
         RegistrationCredentials(
-         key ="password",   heading = "Password", placeholder = "Password", inputType = KeyboardType.Password
+            key = "password",
+            heading = "Password",
+            placeholder = "Password",
+            inputType = KeyboardType.Password
         ),
 
         RegistrationCredentials(
@@ -395,4 +434,15 @@ fun getFormUI(): List<RegistrationCredentials> {
             inputType = KeyboardType.Password
         )
     )
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun PreviewAccountRegistrationUI() {
+    // Wrap in your theme if you have one, like MyAppTheme { ... }
+    AccountRegistrationUI(initiateGoogleSignin = {
+        Log.d("Preview", "Google Sign-In clicked")
+    }, initiateEmailSignin = { name, email, password ->
+        Log.d("Preview", "Email Sign-In with: $name, $email, $password")
+    })
 }

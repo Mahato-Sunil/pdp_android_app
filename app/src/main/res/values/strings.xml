@@ -8,4 +8,6 @@
     <string name="title_activity_account_center">AccountCenterActivity</string>
     <string name="title_activity_test">Test</string>
     <string name="title_activity_account_registration">AccountRegistrationActivity</string>
+    <string name="title_activity_statistics">StatisticsActivity</string>
+    <string name="title_activity_about">AboutActivity</string>
 </resources>
