@@ -2,10 +2,8 @@ package com.officialsunil.pdpapplication.viewui
 
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.graphics.Paint
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -35,10 +33,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
@@ -58,11 +53,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
@@ -70,18 +63,16 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
-import com.officialsunil.pdpapplication.viewui.ui.theme.PDPApplicationTheme
 import com.officialsunil.pdpapplication.R
 import com.officialsunil.pdpapplication.utils.EmailAuthUtils
 import com.officialsunil.pdpapplication.utils.FirebaseUserCredentials
 import com.officialsunil.pdpapplication.utils.ProfileInformation
 import com.officialsunil.pdpapplication.utils.UserProfileSettings
-import kotlin.jvm.java
+import com.officialsunil.pdpapplication.viewui.ui.theme.PDPApplicationTheme
 
 class AccountCenterActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -174,7 +165,6 @@ fun AccountHeadingUI(navigateTo: (String) -> Unit) {
 @Composable
 fun AccountContainer(navigateTo: (String) -> Unit) {
     Column(
-//        verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxSize()
@@ -244,17 +234,10 @@ fun AccountInformationContainer(navigateTo: (String) -> Unit) {
         val blankImageUrl =
             "https://cdn.pixabay.com/photo/2016/04/22/04/57/graduation-1345143_1280.png"
         val photoUrl = currentUsersCredentials?.photoUrl
+        Log.d("Photo", "$photoUrl")
         val isEmailVerified = currentUsersCredentials?.isEmailVerified
+        val finalPhoto = if (photoUrl != null) photoUrl else blankImageUrl
 
-        val finalPhoto = if (photoUrl?.toString().isNullOrBlank()) {
-            blankImageUrl
-        } else {
-            photoUrl.toString()
-        }
-
-        Log.e("Photo URL used", finalPhoto)
-
-        Log.e("Photo ", "$photoUrl")
         Spacer(Modifier.height(20.dp))
 
         Box(
@@ -283,7 +266,8 @@ fun AccountInformationContainer(navigateTo: (String) -> Unit) {
                     modifier = Modifier
                         .size(28.dp)
                         .align(Alignment.BottomEnd)
-                        .offset(x = (-8).dp, y = (-4).dp),
+                        .offset(x = (-8).dp, y = (-4).dp)
+                        .zIndex(1f),
                     contentScale = ContentScale.Fit
                 )
             }
