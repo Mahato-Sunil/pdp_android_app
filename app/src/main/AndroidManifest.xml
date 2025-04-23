@@ -8,6 +8,7 @@
 
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -33,11 +34,6 @@
             android:name=".viewui.AccountRegistrationActivity"
             android:exported="false"
             android:label="@string/title_activity_account_registration"
-            android:theme="@style/Theme.PdpApplication.CustomSplashScreen" />
-        <activity
-            android:name=".viewui.Test"
-            android:exported="false"
-            android:label="@string/title_activity_test"
             android:theme="@style/Theme.PdpApplication.CustomSplashScreen" />
         <activity
             android:name=".viewui.AccountCenterActivity"

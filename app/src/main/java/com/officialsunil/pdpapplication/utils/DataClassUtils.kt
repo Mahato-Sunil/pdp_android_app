@@ -1,8 +1,11 @@
 package com.officialsunil.pdpapplication.utils
 
 // all the data class to be stored here
+import android.graphics.Bitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.input.KeyboardType
+import java.sql.Timestamp
+import java.time.LocalTime
 
 // create a data class for the account information section
 data class ProfileInformation(
@@ -37,8 +40,25 @@ data class RegistrationCredentials(
     val key: String, val heading: String, val placeholder: String, val inputType: KeyboardType
 )
 
-
 data class SocialMediaIcon(
     val icon: String, val description: String, val profileUrl: String
 )
 
+// data class for firestore databse
+data class PredictionData(
+    val userId: String,
+    val imageListArray: List<Int>,
+    val predictedName: String,
+    val accuracy: String,
+    val timestamp: LocalTime
+)
+
+data class RetrievePredictionData(
+    val retrievePredictionData: List<PredictionData>
+)
+
+data class DiagnosesList(
+    val image: Bitmap,
+    val name: String,
+    val timestamp: LocalTime
+)

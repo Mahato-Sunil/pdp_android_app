@@ -222,5 +222,8 @@ fun saveImageToCache(context: Context, bitmaps: List<Bitmap>, prediction: Classi
     val imagePredictionIntent = Intent(context, PredictionActivity::class.java)
     imagePredictionIntent.putExtra("image_path", absoluteFilePath)
     imagePredictionIntent.putExtra("prediction", predictionFormat)
+    imagePredictionIntent.putExtra("diseaseName", prediction.name)
+    imagePredictionIntent.putExtra("diseaseAccuracy",  String.format(Locale.US, "%.2f", prediction.score * 100))
+
     context.startActivity(imagePredictionIntent)
 }

@@ -1,10 +1,10 @@
 package com.officialsunil.pdpapplication.model
 
-import com.officialsunil.pdpapplication.utils.PredictionDescription
+import com.officialsunil.pdpapplication.utils.DiseaseInformation
 
 //describe the disease info here
 
-fun getPredictionDetails(prediction: String): PredictionDescription {
+fun getPredictionDetails(prediction: String): DiseaseInformation {
     //clean the prediction string
     val cleanPrediction = prediction
         .replace(Regex("""\s*\(.*?\)\s*"""), "") // removes anything like "(12%)"
@@ -12,7 +12,8 @@ fun getPredictionDetails(prediction: String): PredictionDescription {
         .lowercase()
 
     return when (cleanPrediction) {
-        "early_blight" -> PredictionDescription(
+        "early_blight" -> DiseaseInformation(
+            diseaseId = "23sdaf",
             diseaseName = "Early Blight",
             diseaseDescription = "A fungal disease that affects the leaves and stems.",
             diseaseCause = "Caused by the fungus *Alternaria solani*.",
@@ -21,7 +22,8 @@ fun getPredictionDetails(prediction: String): PredictionDescription {
         )
 
         // Add other conditions for different predictions...
-        else -> PredictionDescription(
+        else -> DiseaseInformation(
+            diseaseId = "23sdaf",
             diseaseName = "Unknown",
             diseaseDescription = "No information available.",
             diseaseCause = "-",

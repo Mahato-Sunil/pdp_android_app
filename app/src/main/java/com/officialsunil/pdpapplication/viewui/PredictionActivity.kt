@@ -1,8 +1,10 @@
 package com.officialsunil.pdpapplication.viewui
 
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -13,14 +15,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -30,9 +30,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBackIosNew
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.CloudDone
+import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -43,6 +42,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,10 +50,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.asImageBitmap
@@ -63,25 +59,46 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.graphics.createBitmap
+import androidx.lifecycle.lifecycleScope
 import com.officialsunil.pdpapplication.R
 import com.officialsunil.pdpapplication.model.getPredictionDetails
 import com.officialsunil.pdpapplication.ui.theme.PDPApplicationTheme
-import com.officialsunil.pdpapplication.utils.PredictionDescription
+import com.officialsunil.pdpapplication.utils.DiseaseInformation
+import com.officialsunil.pdpapplication.utils.FirebaseFirestoreUtils
+import com.officialsunil.pdpapplication.utils.FirebaseUserCredentials
+import com.officialsunil.pdpapplication.utils.PredictionData
+import com.officialsunil.pdpapplication.utils.convertImagetoByteArray
+import kotlinx.coroutines.launch
+import java.time.LocalTime
 
 class PredictionActivity : ComponentActivity() {
+    var isAlreadyUploaded = mutableStateOf(false)
+    private lateinit var absolutePath: String
+    private lateinit var diseaseName: String
+    private lateinit var diseaseAccuracy: String
+    private lateinit var imageBitmap: Bitmap
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val absolutePath = intent.getStringExtra("image_path")
+        // get the data from previous activity
         val prediction = intent.getStringExtra("prediction")
+        absolutePath = intent.getStringExtra("image_path").toString()
+        imageBitmap = BitmapFactory.decodeFile(absolutePath)
+        diseaseName = intent.getStringExtra("diseaseName").toString()
+        diseaseAccuracy = intent.getStringExtra("diseaseAccuracy").toString()
+
         enableEdgeToEdge()
         setContent {
             PDPApplicationTheme {
-                InitPredictionActivity(absolutePath.toString(), prediction.toString())
+                InitPredictionActivity(
+                    imageBitmap,
+                    prediction.toString(),
+                    saveImage = { lifecycleScope.launch { savePredictionToFirebase() } },
+                    isAlreadyUploaded = isAlreadyUploaded
+                )
             }
         }
     }
@@ -93,14 +110,71 @@ class PredictionActivity : ComponentActivity() {
         finish()
     }
 
-    // function to save the data to the firestorea
-    fun saveScannedImageToFirebase() {/* code to save the data to firebase */
 
+    // for checking
+    fun estimateMemorySizeKb(byteArray: ByteArray?): Int {
+        return byteArray?.size?.div(1024) ?: 0
+    }
+
+    fun estimateListMemorySizeKb(list: List<Int>?): Int {
+        return list?.size?.times(4)?.div(1024) ?: 0 // Assuming 4 bytes per Integer
+    }
+
+    // function to save the data to the firestorea
+    suspend fun savePredictionToFirebase() {/* code to save the data to firebase */
+        //get the  current login users detail
+        if (isAlreadyUploaded.value) return
+
+        val currentUser = FirebaseUserCredentials.getCurrentUserCredentails()
+        val timestamp = LocalTime.now()
+
+        // get the image byte
+        val compressedImageByte = convertImagetoByteArray(this@PredictionActivity, absolutePath)
+        val compressedImageList = compressedImageByte?.map{it.toInt()}
+
+        // for debugginh purpose
+        val compressedByteSizeKb = estimateMemorySizeKb(compressedImageByte)
+        val compressedListSizeKb = estimateListMemorySizeKb(compressedImageList)
+        val firestoreOverheadPercentage = 0.30 // Assuming 20% overhead
+        val estimatedFirestoreSizeKb = compressedListSizeKb * (1 + firestoreOverheadPercentage)
+        Log.d("Prediction", "Estimated Size of List of Image int : $compressedListSizeKb KB")
+        Log.d("Prediction", "Number items of Compressed Byte : ${compressedImageByte?.size}")
+        Log.d("Prediction", "Estimated Size of Compressed Byte : $compressedByteSizeKb KB")
+        Log.d("Prediction", "number of items of List of Image int : ${compressedImageList?.size}")
+        Log.d("Prediction", "Estimated Firestore Storage Size (with overhead) : $estimatedFirestoreSizeKb KB")
+
+
+        val predictionData = PredictionData(
+            userId = currentUser?.uid ?: "",
+            imageListArray = compressedImageList!!,
+            predictedName = diseaseName.toString(),
+            accuracy = diseaseAccuracy.toString(),
+            timestamp = timestamp
+        )
+
+        Log.d("Prediction", "Prediction data : $predictionData")
+
+        FirebaseFirestoreUtils.storeToFirestore(
+            predictData = predictionData,
+            onDataStored =
+                {
+                    isAlreadyUploaded.value = true
+                    Log.d("Prediction", "Data Stored")
+                },
+            onError =
+                { errMsg ->
+                    Log.e("Prediction", errMsg)
+                })
     }
 }
 
 @Composable
-fun InitPredictionActivity(absolutePath: String, prediction: String) {
+fun InitPredictionActivity(
+    bitmap: Bitmap,
+    prediction: String,
+    saveImage: () -> Unit,
+    isAlreadyUploaded: MutableState<Boolean>
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -110,19 +184,20 @@ fun InitPredictionActivity(absolutePath: String, prediction: String) {
             .systemBarsPadding()
             .verticalScroll(rememberScrollState())
     ) {
-        PredictionHeader()
+        PredictionHeader(bitmap, saveImage, isAlreadyUploaded)
         Spacer(Modifier.height(20.dp))
-        PredictionContainer(absolutePath, prediction)
+        PredictionContainer(bitmap, prediction)
         PredictionDescriptionContainer(
             prediction = prediction, getPredictionDescription = ::getPredictionDetails
         )
     }
-
 }
 
 // function to show the prediction header
 @Composable
-fun PredictionHeader() {
+fun PredictionHeader(
+    bitmap: Bitmap, saveImage: () -> Unit, isAlreadyUploaded: MutableState<Boolean>
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(20.dp),
@@ -133,7 +208,6 @@ fun PredictionHeader() {
             .background(Color.Transparent)
     ) {
         val context = LocalContext.current
-
         IconButton(
             onClick = {
                 // Handle the close icon click
@@ -143,19 +217,38 @@ fun PredictionHeader() {
             Icon(
                 imageVector = Icons.Default.ArrowBackIosNew,
                 contentDescription = "Previous Icon",
-                modifier = Modifier.fillMaxSize(.75f),
+                modifier = Modifier.size(28.dp),
                 tint = colorResource(R.color.font_color)
             )
         }
 
         Text(
             text = "Diagnosis", style = TextStyle(
-                fontSize = 24.sp,
-                fontWeight = FontWeight(600),
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
                 letterSpacing = 1.2.sp,
-                color = colorResource(R.color.font_color)
             )
         )
+
+        IconButton(
+            onClick = {
+//                //upload the image and get the url
+//                val currentUid =
+//                    FirebaseUserCredentials.getCurrentUserCredentails()?.uid ?: "pdpUser"
+//                FirebaseFirestoreUtils.uploadImage(
+//                    userId = currentUid, bitmap = bitmap, onResult = { imageUrl = it.toString() })
+                saveImage()
+            }) {
+
+            val iconVector =
+                if (isAlreadyUploaded.value) Icons.Default.CloudDone else Icons.Default.CloudOff
+            Icon(
+                imageVector = iconVector,
+                contentDescription = "Cloud Icon",
+                modifier = Modifier.size(28.dp),
+                tint = Color.Gray
+            )
+        }
     }
     HorizontalDivider(
         color = Color.Gray, thickness = 1.dp, modifier = Modifier.fillMaxWidth(.92f)
@@ -165,13 +258,7 @@ fun PredictionHeader() {
 
 //function to show the prediction body
 @Composable
-fun PredictionContainer(absolutePath: String, prediction: String) {
-    // for preview
-//    val bitmap = createBitmap(256, 256).apply {
-//        eraseColor(android.graphics.Color.BLUE)
-//    }
-
-    val bitmap = BitmapFactory.decodeFile(absolutePath)
+fun PredictionContainer(bitmap: Bitmap, prediction: String) {
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()
@@ -232,12 +319,13 @@ fun PredictionContainer(absolutePath: String, prediction: String) {
 // function to show the other information based onthe predited disease
 @Composable
 fun PredictionDescriptionContainer(
-    prediction: String, getPredictionDescription: (String) -> PredictionDescription
+    prediction: String, getPredictionDescription: (String) -> DiseaseInformation
 ) {
 //    val predictedResult = getPredictionDescription(prediction)
 
     // Dummy data for testing
-    val predictedResult = PredictionDescription(
+    val predictedResult = DiseaseInformation(
+        diseaseId = "potato_blight",
         diseaseName = "Potato Blight",
         diseaseDescription = "This is a fungal disease affecting the leaves of potato plants.",
         diseaseCause = "Caused by poor drainage and extended exposure to moisture.",
@@ -297,10 +385,7 @@ fun PredictionDescriptions(
                     .padding(start = 16.dp, end = 16.dp)
             ) {
                 Text(
-                    text = title,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    style = TextStyle(
+                    text = title, fontSize = 18.sp, fontWeight = FontWeight.Bold, style = TextStyle(
                         letterSpacing = 1.2.sp
                     )
                 )
