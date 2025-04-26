@@ -62,6 +62,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
+import com.google.firebase.Timestamp
 import com.officialsunil.pdpapplication.R
 import com.officialsunil.pdpapplication.model.getPredictionDetails
 import com.officialsunil.pdpapplication.ui.theme.PDPApplicationTheme
@@ -71,7 +72,6 @@ import com.officialsunil.pdpapplication.utils.FirebaseUserCredentials
 import com.officialsunil.pdpapplication.utils.PredictionData
 import com.officialsunil.pdpapplication.utils.convertImagetoByteArray
 import kotlinx.coroutines.launch
-import java.time.LocalTime
 
 class PredictionActivity : ComponentActivity() {
     var isAlreadyUploaded = mutableStateOf(false)
@@ -126,11 +126,11 @@ class PredictionActivity : ComponentActivity() {
         if (isAlreadyUploaded.value) return
 
         val currentUser = FirebaseUserCredentials.getCurrentUserCredentails()
-        val timestamp = LocalTime.now()
+        val timestamp = Timestamp.now()
 
         // get the image byte
         val compressedImageByte = convertImagetoByteArray(this@PredictionActivity, absolutePath)
-        val compressedImageList = compressedImageByte?.map{it.toInt()}
+        val compressedImageList = compressedImageByte?.map { it.toInt() and 0xFF}
 
         // for debugginh purpose
         val compressedByteSizeKb = estimateMemorySizeKb(compressedImageByte)
@@ -141,7 +141,10 @@ class PredictionActivity : ComponentActivity() {
         Log.d("Prediction", "Number items of Compressed Byte : ${compressedImageByte?.size}")
         Log.d("Prediction", "Estimated Size of Compressed Byte : $compressedByteSizeKb KB")
         Log.d("Prediction", "number of items of List of Image int : ${compressedImageList?.size}")
-        Log.d("Prediction", "Estimated Firestore Storage Size (with overhead) : $estimatedFirestoreSizeKb KB")
+        Log.d(
+            "Prediction",
+            "Estimated Firestore Storage Size (with overhead) : $estimatedFirestoreSizeKb KB"
+        )
 
 
         val predictionData = PredictionData(
@@ -149,7 +152,7 @@ class PredictionActivity : ComponentActivity() {
             imageListArray = compressedImageList!!,
             predictedName = diseaseName.toString(),
             accuracy = diseaseAccuracy.toString(),
-            timestamp = timestamp
+            timestamp = timestamp as Timestamp
         )
 
         Log.d("Prediction", "Prediction data : $predictionData")

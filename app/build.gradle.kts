@@ -3,7 +3,6 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.compose.compiler)
     id("com.google.gms.google-services")
-
     id("com.google.devtools.ksp")   // for ksp (kotlin symbol processor)
 }
 
@@ -101,4 +100,8 @@ dependencies {
     //for coil (Coroutine Image Loader)
     implementation(libs.coil.compose)
     implementation(libs.firebase.firestore)
+
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
 }

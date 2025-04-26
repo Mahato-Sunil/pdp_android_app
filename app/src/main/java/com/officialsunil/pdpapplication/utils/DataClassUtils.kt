@@ -4,8 +4,10 @@ package com.officialsunil.pdpapplication.utils
 import android.graphics.Bitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.input.KeyboardType
-import java.sql.Timestamp
-import java.time.LocalTime
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import com.google.firebase.Timestamp
+
 
 // create a data class for the account information section
 data class ProfileInformation(
@@ -50,7 +52,7 @@ data class PredictionData(
     val imageListArray: List<Int>,
     val predictedName: String,
     val accuracy: String,
-    val timestamp: LocalTime
+    val timestamp: Timestamp
 )
 
 data class RetrievePredictionData(
@@ -60,5 +62,32 @@ data class RetrievePredictionData(
 data class DiagnosesList(
     val image: Bitmap,
     val name: String,
-    val timestamp: LocalTime
+    val timestamp: Timestamp
+)
+
+// data class PRediction for Room local database
+// complete alternative of the firebase
+// mimicing the firebase data structure
+@Entity(tableName = "Predictions")
+data class Predictions(
+    val userId: String,
+    val image: Bitmap,
+    val name: String,
+    val accuracy : String,
+    val timestamp: Timestamp,
+
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0
+)
+
+// data class to store the state of the  database predictions
+data class PredictionState (
+    val predictions: List<Predictions> = emptyList(),
+    val userId: String = "",
+    val image : Bitmap? = null,
+    val name : String = "",
+    val accuracy: String= "",
+    val timestamp: Timestamp = Timestamp.now(),
+    val isStoringPredictions: Boolean = false,
+    val sortType : SortType = SortType.TIMESTAMP        // creating the default sort type as Timestampt
 )

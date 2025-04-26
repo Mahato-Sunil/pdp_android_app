@@ -12,7 +12,6 @@ import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.tasks.await
-import java.time.LocalTime
 
 
 object FirebaseFirestoreUtils {
@@ -32,12 +31,10 @@ object FirebaseFirestoreUtils {
                 .document(System.currentTimeMillis().toString())
 
         //check for empty ness
-        if (predictData.userId.isEmpty() ||
-            predictData.imageListArray.isEmpty() ||
-            predictData.imageListArray.equals(ByteArray(0)) ||
-            predictData.predictedName.isEmpty() ||
-            predictData.accuracy.isEmpty() ||
-            predictData.timestamp.toString().isEmpty()
+        if (predictData.userId.isEmpty() || predictData.imageListArray.isEmpty() || predictData.imageListArray.equals(
+                ByteArray(0)
+            ) || predictData.predictedName.isEmpty() || predictData.accuracy.isEmpty() || predictData.timestamp.toString()
+                .isEmpty()
         ) {
             onError("Incomplete Data ")
             return
@@ -72,35 +69,31 @@ object FirebaseFirestoreUtils {
 
     // function to read the data from the firestore database
     // call this function using lifecyclescope.launch method
-    suspend fun readPredictionData(userId: String, onError: (String) -> Unit): RetrievePredictionData? {
+    suspend fun readPredictionData(
+        userId: String, onError: (String) -> Unit
+    ): RetrievePredictionData? {
+        Log.d("User Credentials", userId)
         return try {
             // Fetch User Info (Single Document)
-            val userSnapshot = fireDb.collection(DBNAME).document(userId).get().await()
             val predictionSnapshot =
                 fireDb.collection(DBNAME).document(userId).collection("Predictions")
                     .orderBy("timestamp", Query.Direction.DESCENDING) // Sort latest first
-                    .get()
-                    .await()
+                    .get().await()
 
             //check for the existence of the user data
-            if (userSnapshot.exists()) {
-                val retrievePredictionData = predictionSnapshot.documents.mapNotNull { doc ->
-                    doc.data?.let {
-                        PredictionData(
-                            userId = it["userId"] as? String ?: "",
-                            imageListArray = it["imageListArray"] as? List<Int> ?: emptyList(),
-                            predictedName = it["predictedName"] as? String ?: "",
-                            accuracy = it["accuracy"] as? String?: "0.0",
-                            timestamp = it["timestamp"] as LocalTime
-                        )
-                    }
+            val retrievePredictionData = predictionSnapshot.documents.mapNotNull { doc ->
+                doc.data?.let {
+                    PredictionData(
+                        userId = it["userId"] as? String ?: "",
+                        imageListArray = it["imageListArray"] as? List<Int> ?: emptyList(),
+                        predictedName = it["predictedName"] as? String ?: "",
+                        accuracy = it["accuracy"] as? String ?: "0.0",
+                        timestamp = it["timestamp"] as? Timestamp ?: Timestamp.now() // Correctly cast to Timestamp
+                    )
                 }
-                RetrievePredictionData(retrievePredictionData)
-            } else {
-                Log.e("Firestore DB", "User document not found")
-                onError("User document not found")
-                null
             }
+
+            RetrievePredictionData(retrievePredictionData)
         } catch (e: Exception) {
             Log.e("Firestore DB", "Error: ${e.message}")
             onError("Error! Failed to retrieve data")
