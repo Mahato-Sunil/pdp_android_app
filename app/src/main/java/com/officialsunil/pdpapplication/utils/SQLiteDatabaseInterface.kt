@@ -22,9 +22,9 @@ interface SQLiteDatabaseInterface {
     @Delete
     suspend fun deletePrediction(predictions: Predictions)
 
-    @Query("SELECT* FROM Predictions WHERE userId = :userId ORDER BY name ASC" )
-    suspend fun getPredictionListOrderedByName(userId : String): Flow<List<Predictions>>
+    @Query("SELECT* FROM Predictions WHERE userId = :userId ORDER BY name ASC")
+    fun getPredictionListOrderedByName(userId: String): Flow<List<Predictions>>
 
-    @Query("SELECT* FROM Predictions WHERE userId = :userId ORDER BY timestamp DESC" )
-    suspend fun getPredictionListOrderedByTimestamp(userId : String): Flow<List<Predictions>>
+    @Query("SELECT* FROM Predictions WHERE userId = :userId ORDER BY timestamp DESC")
+    fun getPredictionListOrderedByTimestamp(userId : String): Flow<List<Predictions>>
 }

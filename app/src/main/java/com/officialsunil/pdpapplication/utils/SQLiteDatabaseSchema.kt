@@ -2,6 +2,7 @@ package com.officialsunil.pdpapplication.utils
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 
 // define the database schema and structure here
 
@@ -10,6 +11,6 @@ import androidx.room.RoomDatabase
     version = 1,
 )
 
-abstract class SQLiteDatabaseSchema: RoomDatabase() {
+abstract class SQLiteDatabaseSchema : RoomDatabase() {
     abstract val sqliteDatabaseInterface: SQLiteDatabaseInterface
 }

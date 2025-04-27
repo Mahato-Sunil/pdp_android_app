@@ -76,9 +76,9 @@ class SQLiteDatabaseViewModel(
                     isStoringPredictions = true,
                     userId = "",
                     name = "",
-                    image = null,
+                    image = ByteArray(0),
                     accuracy = "",
-                    timestamp = Timestamp.now()
+                    timestamp = Timestamp.now().toString()
                 ) }
 
             }

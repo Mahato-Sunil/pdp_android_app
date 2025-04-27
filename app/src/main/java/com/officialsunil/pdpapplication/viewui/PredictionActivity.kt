@@ -70,7 +70,7 @@ import com.officialsunil.pdpapplication.utils.DiseaseInformation
 import com.officialsunil.pdpapplication.utils.FirebaseFirestoreUtils
 import com.officialsunil.pdpapplication.utils.FirebaseUserCredentials
 import com.officialsunil.pdpapplication.utils.PredictionData
-import com.officialsunil.pdpapplication.utils.convertImagetoByteArray
+import com.officialsunil.pdpapplication.utils.convertImageToByteArray
 import kotlinx.coroutines.launch
 
 class PredictionActivity : ComponentActivity() {
@@ -129,7 +129,7 @@ class PredictionActivity : ComponentActivity() {
         val timestamp = Timestamp.now()
 
         // get the image byte
-        val compressedImageByte = convertImagetoByteArray(this@PredictionActivity, absolutePath)
+        val compressedImageByte = convertImageToByteArray(this@PredictionActivity, absolutePath)
         val compressedImageList = compressedImageByte?.map { it.toInt() and 0xFF}
 
         // for debugginh purpose

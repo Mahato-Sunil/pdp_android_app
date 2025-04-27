@@ -3,6 +3,7 @@ package com.officialsunil.pdpapplication.utils
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Bitmap.CompressFormat
+import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -14,8 +15,10 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import java.io.ByteArrayOutputStream
 import androidx.core.graphics.scale
+import androidx.room.TypeConverter
 import coil.ImageLoader
 import coil.request.ImageRequest
+import com.google.firebase.firestore.Blob
 import kotlinx.coroutines.Dispatchers
 import okhttp3.Dispatcher
 import kotlinx.coroutines.withContext
@@ -85,32 +88,34 @@ Purpose: Converts an image from a file path or URI into a compressed JPEG byte a
 Suspending function: Runs asynchronously with withContext(Dispatchers.IO) to keep it off the main/UI thread.
 
  */
-suspend fun convertImagetoByteArray(
-    context: Context, imageUri: String, // file path
-    maxSize: Int = 1024 * 500     // 500 kb
-
-): ByteArray? =
-    withContext(Dispatchers.IO) { //This is used because loading and compressing bitmaps are expensive operations and should not block the UI thread.
-
-        val imageLoader = ImageLoader(context)
-        val request = ImageRequest.Builder(context).data(imageUri)
-            .size(400) // Resize image to a max width/height of 800px
-            .allowHardware(false) // is important because hardware bitmaps cannot be converted into byte arrays or manipulated directly.
+suspend fun convertImageToByteArray(
+    context: Context, imageUri: String, maxSize: Int = 1024 * 500 // 500 KB
+): ByteArray? = withContext(Dispatchers.IO) {
+    val imageLoader = ImageLoader(context)
+    val request =
+        ImageRequest.Builder(context).data(imageUri).size(400) // Resize to 400px (not 800px)
+            .allowHardware(false) // Important for Bitmap operations
             .build()
 
-        val result = imageLoader.execute(request)
+    val result = imageLoader.execute(request)
+    val bitmap = (result.drawable as? BitmapDrawable)?.bitmap ?: return@withContext null
 
-        val bitmap = (result.drawable as? BitmapDrawable)?.bitmap ?: return@withContext null
+    var quality = 95
+    var byteArray: ByteArray
 
-        var quality = 95
-        var byteArray: ByteArray
+    do {
+        val outputStream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
+        byteArray = outputStream.toByteArray()
+        quality -= 5
+    } while (byteArray.size > maxSize && quality > 50)
 
-        do {
-            val outputStream = ByteArrayOutputStream()
-            bitmap.compress(CompressFormat.JPEG, quality, outputStream)
-            byteArray = outputStream.toByteArray()
-            quality -= 5
-        } while (byteArray.size > maxSize && quality > 50)
+    byteArray
+}
 
-        byteArray
+// function to convert byte array to bitmap
+fun byteArrayToBitmap(byteArray: ByteArray?): Bitmap? {
+    return byteArray?.let {
+        BitmapFactory.decodeByteArray(it, 0, it.size)
     }
+}

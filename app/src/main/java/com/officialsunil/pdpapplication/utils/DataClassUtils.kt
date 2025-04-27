@@ -7,6 +7,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.Blob
 
 
 // create a data class for the account information section
@@ -71,23 +72,23 @@ data class DiagnosesList(
 @Entity(tableName = "Predictions")
 data class Predictions(
     val userId: String,
-    val image: Bitmap,
+    val image: ByteArray,
     val name: String,
-    val accuracy : String,
-    val timestamp: Timestamp,
+    val accuracy: String,
+    val timestamp: String,
 
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0
 )
 
 // data class to store the state of the  database predictions
-data class PredictionState (
+data class PredictionState(
     val predictions: List<Predictions> = emptyList(),
     val userId: String = "",
-    val image : Bitmap? = null,
-    val name : String = "",
-    val accuracy: String= "",
-    val timestamp: Timestamp = Timestamp.now(),
+    val image: ByteArray = ByteArray(0),
+    val name: String = "",
+    val accuracy: String = "",
+    val timestamp: String = Timestamp.now().toString(),
     val isStoringPredictions: Boolean = false,
-    val sortType : SortType = SortType.TIMESTAMP        // creating the default sort type as Timestampt
+    val sortType: SortType = SortType.TIMESTAMP        // creating the default sort type as Timestampt
 )
