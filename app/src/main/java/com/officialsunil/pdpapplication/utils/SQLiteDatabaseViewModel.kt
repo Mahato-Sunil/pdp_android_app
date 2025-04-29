@@ -43,13 +43,13 @@ class SQLiteDatabaseViewModel(
     // events
     fun onEvent(event: SQLiteDatabaseEvent) {
         when (event) {
-            is SQLiteDatabaseEvent.deletePrediction -> {
+            is SQLiteDatabaseEvent.DeletePrediction -> {
                 viewModelScope.launch {
                     dao.deletePrediction(event.predictions)
                 }
             }
 
-            is SQLiteDatabaseEvent.savePrediction -> {
+            is SQLiteDatabaseEvent.SavePrediction -> {
                 val userId = state.value.userId
                 val name = state.value.name
                 val image = state.value.image
@@ -83,7 +83,7 @@ class SQLiteDatabaseViewModel(
 
             }
 
-            is SQLiteDatabaseEvent.setPredictedImage -> {
+            is SQLiteDatabaseEvent.SetPredictedImage -> {
                 _state.update {
                     it.copy(
                         image = event.predictedImage,
@@ -91,7 +91,7 @@ class SQLiteDatabaseViewModel(
                 }
             }
 
-            is SQLiteDatabaseEvent.setPredictedName -> {
+            is SQLiteDatabaseEvent.SetPredictedName -> {
                 _state.update {
                     it.copy(
                         name = event.predictedName,
@@ -99,7 +99,7 @@ class SQLiteDatabaseViewModel(
                 }
             }
 
-            is SQLiteDatabaseEvent.setUserId -> {
+            is SQLiteDatabaseEvent.SetUserId -> {
                 _state.update {
                     it.copy(
                         userId = event.userId,
@@ -107,7 +107,7 @@ class SQLiteDatabaseViewModel(
                 }
             }
 
-            is SQLiteDatabaseEvent.setAccuracy -> {
+            is SQLiteDatabaseEvent.SetAccuracy -> {
                 _state.update {
                     it.copy(
                         accuracy = event.accuracy,
@@ -115,7 +115,7 @@ class SQLiteDatabaseViewModel(
                 }
             }
 
-            is SQLiteDatabaseEvent.setTimestamp -> {
+            is SQLiteDatabaseEvent.SetTimestamp -> {
                 _state.update {
                     it.copy(
                         timestamp = event.timestamp,
@@ -123,7 +123,7 @@ class SQLiteDatabaseViewModel(
                 }
             }
 
-            is SQLiteDatabaseEvent.sortPrediction -> {
+            is SQLiteDatabaseEvent.SortPrediction -> {
                 _sortType.value = event.sortType
             }
         }

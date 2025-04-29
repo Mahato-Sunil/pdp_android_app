@@ -27,6 +27,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -36,7 +37,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -52,6 +52,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.room.Room
 import com.officialsunil.pdpapplication.R
@@ -64,7 +65,7 @@ import com.officialsunil.pdpapplication.viewui.ui.theme.PDPApplicationTheme
 
 class DiagnosesListActivity : ComponentActivity() {
     // initiating the database  for displaying the database
-    private val db by lazy {
+    val db by lazy {
         Room.databaseBuilder(
             applicationContext,
             SQLiteDatabaseSchema::class.java,
@@ -72,7 +73,7 @@ class DiagnosesListActivity : ComponentActivity() {
         ).build()
     }
 
-    private val viewModel by viewModels<SQLiteDatabaseViewModel>(
+    val viewModel by viewModels<SQLiteDatabaseViewModel>(
         factoryProducer = {
             object : ViewModelProvider.Factory {
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -183,6 +184,30 @@ fun NoPredictionsRationale(
 fun DiagnosesList(
     state: PredictionState, onEvent: (SQLiteDatabaseEvent) -> Unit, onItemClicked: () -> Unit
 ) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier
+                .fillMaxWidth(.9f)
+                .background(colorResource(R.color.extra_light_card_background))
+                .padding(8.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Info,
+                contentDescription = "Info Icon",
+                tint = colorResource(R.color.font_color)
+            )
+
+            Text(
+                text = "Please ensure the correctness of the Prediction", style = TextStyle(
+                    fontSize = 12.sp, fontWeight = FontWeight.Normal, letterSpacing = 1.sp
+                ), color = Color.Gray, modifier = Modifier.align(Alignment.CenterVertically)
+            )
+        }
+    }
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxSize()
     ) {

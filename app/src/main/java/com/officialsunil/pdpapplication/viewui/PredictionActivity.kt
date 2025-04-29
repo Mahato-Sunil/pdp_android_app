@@ -5,9 +5,11 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -43,6 +45,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -61,15 +64,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.room.Room
 import com.google.firebase.Timestamp
 import com.officialsunil.pdpapplication.R
 import com.officialsunil.pdpapplication.model.getPredictionDetails
 import com.officialsunil.pdpapplication.ui.theme.PDPApplicationTheme
 import com.officialsunil.pdpapplication.utils.DiseaseInformation
-import com.officialsunil.pdpapplication.utils.FirebaseFirestoreUtils
 import com.officialsunil.pdpapplication.utils.FirebaseUserCredentials
-import com.officialsunil.pdpapplication.utils.PredictionData
+import com.officialsunil.pdpapplication.utils.PredictionState
+import com.officialsunil.pdpapplication.utils.SQLiteDatabaseEvent
+import com.officialsunil.pdpapplication.utils.SQLiteDatabaseSchema
+import com.officialsunil.pdpapplication.utils.SQLiteDatabaseViewModel
 import com.officialsunil.pdpapplication.utils.convertImageToByteArray
 import kotlinx.coroutines.launch
 
@@ -80,10 +88,24 @@ class PredictionActivity : ComponentActivity() {
     private lateinit var diseaseAccuracy: String
     private lateinit var imageBitmap: Bitmap
 
+    // for working with database
+    val db by lazy {
+        Room.databaseBuilder(
+            applicationContext, SQLiteDatabaseSchema::class.java, name = "predictions.db"
+        ).build()
+    }
+
+    val viewModel by viewModels<SQLiteDatabaseViewModel>(
+        factoryProducer = {
+            object : ViewModelProvider.Factory {
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    return SQLiteDatabaseViewModel(db.sqliteDatabaseInterface) as T
+                }
+            }
+        })
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // get the data from previous activity
         val prediction = intent.getStringExtra("prediction")
         absolutePath = intent.getStringExtra("image_path").toString()
         imageBitmap = BitmapFactory.decodeFile(absolutePath)
@@ -93,89 +115,76 @@ class PredictionActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             PDPApplicationTheme {
+                val state by viewModel.state.collectAsState()
                 InitPredictionActivity(
+                    state = state,
+                    onEvent = viewModel::onEvent,
                     imageBitmap,
                     prediction.toString(),
-                    saveImage = { lifecycleScope.launch { savePredictionToFirebase() } },
+                    saveImage = { state, onEvent ->
+                        lifecycleScope.launch { savePredictionToDb(state, onEvent) }
+                    },
                     isAlreadyUploaded = isAlreadyUploaded
                 )
             }
         }
     }
 
-    //function to close the window
+    //    function to close the window
     fun closePreviewWindow() {
         val cameraIntent = Intent(this@PredictionActivity, CameraActivity::class.java)
         startActivity(cameraIntent)
         finish()
     }
 
+    // function to save the image to sqlite database
+    suspend fun savePredictionToDb(state: PredictionState, onEvent: (SQLiteDatabaseEvent) -> Unit) {
+        // check if the data is already uploaded
+        if (isAlreadyUploaded.value) {
+            Toast.makeText(this, "Data already stored", Toast.LENGTH_SHORT).show()
+            return
+        }
 
-    // for checking
-    fun estimateMemorySizeKb(byteArray: ByteArray?): Int {
-        return byteArray?.size?.div(1024) ?: 0
-    }
-
-    fun estimateListMemorySizeKb(list: List<Int>?): Int {
-        return list?.size?.times(4)?.div(1024) ?: 0 // Assuming 4 bytes per Integer
-    }
-
-    // function to save the data to the firestorea
-    suspend fun savePredictionToFirebase() {/* code to save the data to firebase */
-        //get the  current login users detail
-        if (isAlreadyUploaded.value) return
-
+        //get the current user's uid
         val currentUser = FirebaseUserCredentials.getCurrentUserCredentails()
-        val timestamp = Timestamp.now()
+        val userId = currentUser?.uid.toString()
 
-        // get the image byte
-        val compressedImageByte = convertImageToByteArray(this@PredictionActivity, absolutePath)
-        val compressedImageList = compressedImageByte?.map { it.toInt() and 0xFF}
+        // convert image bitmap to the Bytearray
+        val imageByteArray =
+            convertImageToByteArray(this@PredictionActivity, absolutePath) ?: ByteArray(0)
 
-        // for debugginh purpose
-        val compressedByteSizeKb = estimateMemorySizeKb(compressedImageByte)
-        val compressedListSizeKb = estimateListMemorySizeKb(compressedImageList)
-        val firestoreOverheadPercentage = 0.30 // Assuming 20% overhead
-        val estimatedFirestoreSizeKb = compressedListSizeKb * (1 + firestoreOverheadPercentage)
-        Log.d("Prediction", "Estimated Size of List of Image int : $compressedListSizeKb KB")
-        Log.d("Prediction", "Number items of Compressed Byte : ${compressedImageByte?.size}")
-        Log.d("Prediction", "Estimated Size of Compressed Byte : $compressedByteSizeKb KB")
-        Log.d("Prediction", "number of items of List of Image int : ${compressedImageList?.size}")
-        Log.d(
-            "Prediction",
-            "Estimated Firestore Storage Size (with overhead) : $estimatedFirestoreSizeKb KB"
-        )
+        // set the values
+        onEvent(SQLiteDatabaseEvent.SetUserId(userId))
+        onEvent(SQLiteDatabaseEvent.SetPredictedName(diseaseName))
+        onEvent(SQLiteDatabaseEvent.SetPredictedImage(imageByteArray))
+        onEvent(SQLiteDatabaseEvent.SetAccuracy(diseaseAccuracy))
+        onEvent(SQLiteDatabaseEvent.SetTimestamp(Timestamp.now().toString()))
 
+        //  check the data is is available or not
+        Log.d("Prediction", "User Id : ${state.userId}")
+        Log.d("Prediction", "Name : ${state.name}")
+        Log.d("Prediction", "Image : ${state.image}")
+        Log.d("Prediction", "Accuracy : ${state.accuracy}")
 
-        val predictionData = PredictionData(
-            userId = currentUser?.uid ?: "",
-            imageListArray = compressedImageList!!,
-            predictedName = diseaseName.toString(),
-            accuracy = diseaseAccuracy.toString(),
-            timestamp = timestamp as Timestamp
-        )
-
-        Log.d("Prediction", "Prediction data : $predictionData")
-
-        FirebaseFirestoreUtils.storeToFirestore(
-            predictData = predictionData,
-            onDataStored =
-                {
-                    isAlreadyUploaded.value = true
-                    Log.d("Prediction", "Data Stored")
-                },
-            onError =
-                { errMsg ->
-                    Log.e("Prediction", errMsg)
-                })
+        // save the prediction when all the data are availabel and set
+        if (state.userId.isEmpty() || state.name.isEmpty() || state.image.isEmpty() || state.accuracy.isEmpty()) Toast.makeText(
+            this, "Incomplete Data to store", Toast.LENGTH_SHORT
+        ).show()
+        else {
+            onEvent(SQLiteDatabaseEvent.SavePrediction)
+            isAlreadyUploaded.value = true
+            Log.d("SQLite Database", "User Info saved")
+        }
     }
 }
 
 @Composable
 fun InitPredictionActivity(
+    state: PredictionState,
+    onEvent: (SQLiteDatabaseEvent) -> Unit,
     bitmap: Bitmap,
     prediction: String,
-    saveImage: () -> Unit,
+    saveImage: (state: PredictionState, onEvent: (SQLiteDatabaseEvent) -> Unit) -> Unit,
     isAlreadyUploaded: MutableState<Boolean>
 ) {
     Column(
@@ -187,7 +196,12 @@ fun InitPredictionActivity(
             .systemBarsPadding()
             .verticalScroll(rememberScrollState())
     ) {
-        PredictionHeader(bitmap, saveImage, isAlreadyUploaded)
+        PredictionHeader(
+            state = state,
+            onEvent = onEvent,
+            saveImage = saveImage,
+            isAlreadyUploaded = isAlreadyUploaded
+        )
         Spacer(Modifier.height(20.dp))
         PredictionContainer(bitmap, prediction)
         PredictionDescriptionContainer(
@@ -199,7 +213,10 @@ fun InitPredictionActivity(
 // function to show the prediction header
 @Composable
 fun PredictionHeader(
-    bitmap: Bitmap, saveImage: () -> Unit, isAlreadyUploaded: MutableState<Boolean>
+    state: PredictionState,
+    onEvent: (SQLiteDatabaseEvent) -> Unit,
+    saveImage: (state: PredictionState, onEvent: (SQLiteDatabaseEvent) -> Unit) -> Unit,
+    isAlreadyUploaded: MutableState<Boolean>
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -213,9 +230,7 @@ fun PredictionHeader(
         val context = LocalContext.current
         IconButton(
             onClick = {
-                // Handle the close icon click
                 if (context is PredictionActivity) context.closePreviewWindow()
-
             }) {
             Icon(
                 imageVector = Icons.Default.ArrowBackIosNew,
@@ -235,12 +250,7 @@ fun PredictionHeader(
 
         IconButton(
             onClick = {
-//                //upload the image and get the url
-//                val currentUid =
-//                    FirebaseUserCredentials.getCurrentUserCredentails()?.uid ?: "pdpUser"
-//                FirebaseFirestoreUtils.uploadImage(
-//                    userId = currentUid, bitmap = bitmap, onResult = { imageUrl = it.toString() })
-                saveImage()
+                saveImage(state, onEvent)
             }) {
 
             val iconVector =
@@ -258,11 +268,9 @@ fun PredictionHeader(
     )
 }
 
-
 //function to show the prediction body
 @Composable
 fun PredictionContainer(bitmap: Bitmap, prediction: String) {
-
     Column(
         horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()
     ) {
@@ -324,17 +332,17 @@ fun PredictionContainer(bitmap: Bitmap, prediction: String) {
 fun PredictionDescriptionContainer(
     prediction: String, getPredictionDescription: (String) -> DiseaseInformation
 ) {
-//    val predictedResult = getPredictionDescription(prediction)
+    val predictedResult = getPredictionDescription(prediction)
 
     // Dummy data for testing
-    val predictedResult = DiseaseInformation(
-        diseaseId = "potato_blight",
-        diseaseName = "Potato Blight",
-        diseaseDescription = "This is a fungal disease affecting the leaves of potato plants.",
-        diseaseCause = "Caused by poor drainage and extended exposure to moisture.",
-        diseaseSymptoms = "Yellowing leaves, dark spots on foliage, and curling leaf edges.",
-        diseaseTreatment = "Apply fungicides and ensure proper crop rotation."
-    )
+//    val predictedResult = DiseaseInformation(
+//        diseaseId = "potato_blight",
+//        diseaseName = "Potato Blight",
+//        diseaseDescription = "This is a fungal disease affecting the leaves of potato plants.",
+//        diseaseCause = "Caused by poor drainage and extended exposure to moisture.",
+//        diseaseSymptoms = "Yellowing leaves, dark spots on foliage, and curling leaf edges.",
+//        diseaseTreatment = "Apply fungicides and ensure proper crop rotation."
+//    )
     predictedResult.let { result ->
         PredictionDescriptions(
             title = "Description", description = result.diseaseDescription, isExpandedState = true
