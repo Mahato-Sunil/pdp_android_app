@@ -76,7 +76,6 @@ data class Predictions(
     val name: String,
     val accuracy: String,
     val timestamp: String,
-
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0
 )

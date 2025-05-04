@@ -4,6 +4,7 @@ package com.officialsunil.pdpapplication.viewui
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -27,6 +28,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.DoubleArrow
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
@@ -55,7 +57,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.room.Room
+import com.google.firebase.Timestamp
 import com.officialsunil.pdpapplication.R
+import com.officialsunil.pdpapplication.utils.CustomDateTimeFormatter
 import com.officialsunil.pdpapplication.utils.PredictionState
 import com.officialsunil.pdpapplication.utils.SQLiteDatabaseEvent
 import com.officialsunil.pdpapplication.utils.SQLiteDatabaseSchema
@@ -192,19 +196,19 @@ fun DiagnosesList(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier
                 .fillMaxWidth(.9f)
-                .background(colorResource(R.color.extra_light_card_background))
+                .background(Color(240, 245, 255, 255))
                 .padding(8.dp)
         ) {
             Icon(
-                imageVector = Icons.Default.Info,
+                imageVector = Icons.Default.DoubleArrow,
                 contentDescription = "Info Icon",
-                tint = colorResource(R.color.font_color)
+                tint = Color.Blue
             )
 
             Text(
-                text = "Please ensure the correctness of the Prediction", style = TextStyle(
+                text = "Click to View Complete Details", style = TextStyle(
                     fontSize = 12.sp, fontWeight = FontWeight.Normal, letterSpacing = 1.sp
-                ), color = Color.Gray, modifier = Modifier.align(Alignment.CenterVertically)
+                ), color = Color.Blue, modifier = Modifier.align(Alignment.CenterVertically)
             )
         }
     }
@@ -242,8 +246,13 @@ fun DiagnosesList(
                     Text(
                         text = prediction.name, style = MaterialTheme.typography.titleMedium
                     )
+
+                    // get the formatted time from the timestamp
+                    val formattedTime = CustomDateTimeFormatter.formatDateTime(prediction.timestamp)
+//                    val formattedTime= prediction.timestamp
+                    Log.d("Firebase Time", formattedTime)
                     Text(
-                        text = prediction.timestamp.toString(),
+                        text = formattedTime,
                         style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray)
                     )
                 }

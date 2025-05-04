@@ -95,17 +95,20 @@ class HomeActivity : ComponentActivity() {
 fun InitHomeActivityUI(
     initCameraActivity: () -> Unit, initAccountCenter: () -> Unit
 ) {
-    Scaffold(topBar = { HomeHeadingUI() }, bottomBar = {
+    Scaffold(
+        topBar = { HomeHeadingUI() },
+        bottomBar = {
         HomeButtonContainer(
             initCameraActivity, initAccountCenter
         )
     }) { innerPadding ->
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
+//            horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
+                .background(Color.White)
         ) {
             HomeContainer()
         }
@@ -121,19 +124,28 @@ fun InitHomeActivityUI(
 @Composable
 fun HomeHeadingUI() {
     Column(
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxWidth()
             .systemBarsPadding()
-            .background(colorResource(R.color.light_background))
+//            .background(Color.Blue)
+//            .background(colorResource(R.color.light_background))
     ) {
-        Image(
-            painter = painterResource(R.drawable.pdp_logo_text),
-            contentDescription = "System Logo",
+        Text(
+            text = "Potato Disease Prediction",
+            style = TextStyle(
+                color = colorResource(R.color.font_color),
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = TextUnit(1.5f, TextUnitType.Sp)
+            ),
             modifier = Modifier
-                .width(100.dp)
-                .padding(start = 16.dp),
-            contentScale = ContentScale.Fit
+                .fillMaxWidth()
+                .height(40.dp)
+                .padding(8.dp)
         )
+
         HorizontalDivider(
             thickness = 1.dp,
             modifier = Modifier
@@ -150,7 +162,7 @@ fun HomeContainer() {
 
     Column(
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .background(Color.White)
     ) {
         Row(
@@ -258,10 +270,11 @@ fun HomeButtonContainer(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceEvenly,
         modifier = Modifier
-            .systemBarsPadding()
+//            .systemBarsPadding()
             .fillMaxWidth()
             .height(100.dp)
-            .background(colorResource(R.color.light_background))
+            .background(Color.White)
+//            .background(colorResource(R.color.light_background))
     ) {
         //home
         IconButton(
@@ -277,10 +290,9 @@ fun HomeButtonContainer(
             Icon(
                 imageVector = Icons.Default.House,
                 contentDescription = "Home Icon",
-                tint = Color(68, 92, 182, 255),
+                tint = Color(4, 32, 129, 255),
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(221, 202, 255, 255))
             )
         }
 
@@ -290,7 +302,7 @@ fun HomeButtonContainer(
             Icon(
                 imageVector = Icons.Default.CameraEnhance,
                 contentDescription = "Camera Icon",
-                tint = colorResource(R.color.font_color),
+                tint = Color(4, 32, 129, 255),
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -302,7 +314,7 @@ fun HomeButtonContainer(
             Icon(
                 imageVector = Icons.Default.Person,
                 contentDescription = "Camera Icon",
-                tint = colorResource(R.color.font_color),
+                tint = Color(4, 32, 129, 255),
                 modifier = Modifier.fillMaxSize()
             )
         }

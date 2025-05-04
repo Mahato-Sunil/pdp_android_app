@@ -1,5 +1,6 @@
 package com.officialsunil.pdpapplication.viewui
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -104,6 +105,7 @@ class PredictionActivity : ComponentActivity() {
             }
         })
 
+    @SuppressLint("CoroutineCreationDuringComposition")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val prediction = intent.getStringExtra("prediction")
@@ -126,6 +128,9 @@ class PredictionActivity : ComponentActivity() {
                     },
                     isAlreadyUploaded = isAlreadyUploaded
                 )
+
+                // call the save prediction function automatically
+                lifecycleScope.launch { savePredictionToDb(state, viewModel::onEvent) }
             }
         }
     }
