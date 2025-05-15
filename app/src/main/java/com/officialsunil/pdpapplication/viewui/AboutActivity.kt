@@ -1,9 +1,7 @@
 package com.officialsunil.pdpapplication.viewui
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -28,7 +26,6 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBackIosNew
-import androidx.compose.material.icons.filled.ImageNotSupported
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -57,6 +54,8 @@ import com.officialsunil.pdpapplication.R
 import com.officialsunil.pdpapplication.utils.SocialMediaIcon
 import com.officialsunil.pdpapplication.viewui.ui.theme.PDPApplicationTheme
 import androidx.core.net.toUri
+import com.officialsunil.pdpapplication.utils.NavigationUtils
+
 class AboutActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -110,9 +109,7 @@ fun AboutHeaderUI() {
         ) {
             IconButton(
                 onClick = {
-                    val intent = Intent(context, AccountCenterActivity::class.java)
-                    context.startActivity(intent)
-                    if (context is Activity) context.finish()
+                    NavigationUtils.navigate(context, "accountCenter", true)
                 }) {
                 Icon(
                     imageVector = Icons.Default.ArrowBackIosNew,
@@ -241,8 +238,8 @@ fun AboutContainerUI(navigateTo: (String) -> Unit) {
                     }) {
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current).data(icons.icon)
-                            .crossfade(true).placeholder(R.drawable.baseline_find_replace_24)
-                            .error(R.drawable.baseline_find_replace_24).build(),
+                            .crossfade(true).placeholder(R.drawable.no_picture)
+                            .error(R.drawable.no_picture).build(),
                         contentDescription = icons.description,
                         modifier = Modifier.size(48.dp)
                     )

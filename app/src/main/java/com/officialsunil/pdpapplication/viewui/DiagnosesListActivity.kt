@@ -2,7 +2,7 @@
 
 package com.officialsunil.pdpapplication.viewui
 
-import android.content.Intent
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -29,7 +29,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DoubleArrow
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -39,10 +38,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -52,14 +54,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.room.Room
-import com.google.firebase.Timestamp
 import com.officialsunil.pdpapplication.R
 import com.officialsunil.pdpapplication.utils.CustomDateTimeFormatter
+import com.officialsunil.pdpapplication.utils.NavigationUtils
 import com.officialsunil.pdpapplication.utils.PredictionState
 import com.officialsunil.pdpapplication.utils.SQLiteDatabaseEvent
 import com.officialsunil.pdpapplication.utils.SQLiteDatabaseSchema
@@ -71,9 +69,7 @@ class DiagnosesListActivity : ComponentActivity() {
     // initiating the database  for displaying the database
     val db by lazy {
         Room.databaseBuilder(
-            applicationContext,
-            SQLiteDatabaseSchema::class.java,
-            name = "predictions.db"
+            applicationContext, SQLiteDatabaseSchema::class.java, name = "predictions.db"
         ).build()
     }
 
@@ -84,8 +80,7 @@ class DiagnosesListActivity : ComponentActivity() {
                     return SQLiteDatabaseViewModel(db.sqliteDatabaseInterface) as T
                 }
             }
-        }
-    )
+        })
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -94,39 +89,28 @@ class DiagnosesListActivity : ComponentActivity() {
             PDPApplicationTheme {
                 val state by viewModel.state.collectAsState()
                 DiagnosesListScreen(
-                    navigateTo = ::navigateTo,
+                    context = this@DiagnosesListActivity,
                     state = state,
                     onEvent = viewModel::onEvent
                 )
             }
         }
     }
-
-    private fun navigateTo(destination: String) {
-        val intent = when (destination) {
-            "home" -> Intent(this, HomeActivity::class.java)
-            "statistics" -> Intent(this, StatisticsActivity::class.java)
-            "camera" -> Intent(this, CameraActivity::class.java)
-            else -> Intent(this, DiagnosesListActivity::class.java)
-        }
-        startActivity(intent)
-        if (destination == "home") finish()
-    }
 }
 
 @Composable
 fun DiagnosesListScreen(
-    navigateTo: (String) -> Unit, state: PredictionState, onEvent: (SQLiteDatabaseEvent) -> Unit
+    context: Context, state: PredictionState, onEvent: (SQLiteDatabaseEvent) -> Unit
 ) {
     Scaffold(
-        topBar = { DiagnosesHeadingUI(navigateTo) },
+        topBar = { DiagnosesHeadingUI(context = context) },
         modifier = Modifier
             .systemBarsPadding()
             .background(colorResource(R.color.light_background))
     ) { innerPadding ->
         DiagnosesContainer(
             modifier = Modifier.padding(innerPadding),
-            navigateTo = navigateTo,
+            context = context,
             state = state,
             onEvent = onEvent
         )
@@ -137,7 +121,7 @@ fun DiagnosesListScreen(
 @Composable
 fun DiagnosesContainer(
     modifier: Modifier = Modifier,
-    navigateTo: (String) -> Unit,
+    context: Context,
     state: PredictionState,
     onEvent: (SQLiteDatabaseEvent) -> Unit
 ) {
@@ -149,9 +133,21 @@ fun DiagnosesContainer(
             .padding(16.dp)
     ) {
         if (state.predictions.isEmpty()) {
-            NoPredictionsRationale(onTakePictureClicked = { navigateTo("camera") })
+            NoPredictionsRationale(onTakePictureClicked = {
+                NavigationUtils.navigate(
+                    context,
+                    "camera"
+                )
+            })
         } else {
-            DiagnosesList(state, onEvent, onItemClicked = { navigateTo("statistics") })
+            DiagnosesList(state, onEvent, onItemClicked = { dataToPass ->
+                // pass the disease id
+                NavigationUtils.navigate(
+                    context = context,
+                    destination = "statistics",
+                    data = dataToPass
+                )
+            })
         }
     }
 }
@@ -186,11 +182,10 @@ fun NoPredictionsRationale(
 
 @Composable
 fun DiagnosesList(
-    state: PredictionState, onEvent: (SQLiteDatabaseEvent) -> Unit, onItemClicked: () -> Unit
+    state: PredictionState, onEvent: (SQLiteDatabaseEvent) -> Unit, onItemClicked: (String) -> Unit
 ) {
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxWidth()
+        horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()
     ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -223,7 +218,7 @@ fun DiagnosesList(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(90.dp)
-                    .clickable { onItemClicked() }
+                    .clickable { onItemClicked(prediction.diseaseId) }
                     .background(Color.White)
                     .padding(horizontal = 16.dp)) {
 
@@ -263,9 +258,7 @@ fun DiagnosesList(
 }
 
 @Composable
-fun DiagnosesHeadingUI(
-    navigateTo: (String) -> Unit
-) {
+fun DiagnosesHeadingUI(context: Context) {
     Column {
         Row(
             horizontalArrangement = Arrangement.spacedBy(15.dp),
@@ -277,7 +270,7 @@ fun DiagnosesHeadingUI(
         ) {
             IconButton(
                 onClick = {
-                    navigateTo("home")
+                    NavigationUtils.navigate(context, "home", true)
                 }) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,

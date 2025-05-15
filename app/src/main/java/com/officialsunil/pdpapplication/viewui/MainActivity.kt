@@ -4,7 +4,6 @@ import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -71,6 +70,7 @@ import com.officialsunil.pdpapplication.R
 import com.officialsunil.pdpapplication.ui.theme.PDPApplicationTheme
 import com.officialsunil.pdpapplication.utils.EmailAuthUtils
 import com.officialsunil.pdpapplication.utils.GoogleAuthUtils
+import com.officialsunil.pdpapplication.utils.NavigationUtils
 import com.officialsunil.pdpapplication.utils.PdpModelController
 
 class MainActivity : ComponentActivity() {
@@ -112,14 +112,11 @@ class MainActivity : ComponentActivity() {
             PDPApplicationTheme {
 
                 if (isUserLoggedIn()) {
-                    val homeIntent = Intent(this, HomeActivity::class.java)
-                    startActivity(homeIntent)
-                    finish()
+                    NavigationUtils.navigate(this, "home", true)
                 } else {
                     InitMainActivityUI(
                         context = this,
                         activity = this,
-                        initGoogleSignin = { initGoogleSigninRationale() },
                         initGoogleLogin = { initGoogleLogin() },
                         initEmailPasswordSignin = { email, password ->
                             initEmailPasswordSignin(
@@ -138,7 +135,8 @@ class MainActivity : ComponentActivity() {
             email = email,
             password = password,
             onSuccess = { user ->
-                navigateToHome()
+                Toast.makeText(this, "Authentication Successfull", Toast.LENGTH_SHORT).show()
+                NavigationUtils.navigate(this, "home", true)
             },
             onFailure = { exception ->
                 Toast.makeText(this, "Please Enter Correct Credentials", Toast.LENGTH_SHORT).show()
@@ -146,18 +144,6 @@ class MainActivity : ComponentActivity() {
             })
     }
 
-    private fun initGoogleSigninRationale() {
-        val rationaleIntent = Intent(this, GoogleSignInRationale::class.java)
-        startActivity(rationaleIntent)
-        finish()
-    }
-
-    private fun navigateToHome() {
-        val homeIntent = Intent(this, HomeActivity::class.java)
-        startActivity(homeIntent)
-        Toast.makeText(this, "Authentication Successfull", Toast.LENGTH_SHORT).show()
-        finish()
-    }
 
     private val googleSignInLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -171,14 +157,14 @@ class MainActivity : ComponentActivity() {
         GoogleAuthUtils.initiateGoogleSignin(
             context = this, scope = lifecycleScope, launcher = googleSignInLauncher, googleLogin = {
                 runOnUiThread {
-                    navigateToHome()
+                    NavigationUtils.navigate(this, "home", true)
                 }
             })
     }
 
     private fun isUserLoggedIn(): Boolean {
         val auth = FirebaseAuth.getInstance()
-        val user = auth.getCurrentUser()
+        val user = auth.currentUser // it was auth.getCurrentUser() in older versions
         return user != null
     }
 }
@@ -187,7 +173,6 @@ class MainActivity : ComponentActivity() {
 fun InitMainActivityUI(
     context: Context,
     activity: Activity,
-    initGoogleSignin: () -> Unit,
     initGoogleLogin: () -> Unit,
     initEmailPasswordSignin: (String, String) -> Unit,
 ) {
@@ -197,7 +182,7 @@ fun InitMainActivityUI(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        Layout(context, activity, initGoogleSignin, initGoogleLogin, initEmailPasswordSignin)
+        Layout(context, activity, initGoogleLogin, initEmailPasswordSignin)
     }
 }
 
@@ -205,7 +190,6 @@ fun InitMainActivityUI(
 fun Layout(
     context: Context,
     activity: Activity,
-    initGoogleSignin: () -> Unit,
     initGoogleLogin: () -> Unit,
     initEmailPasswordSignin: (String, String) -> Unit
 ) {
@@ -214,7 +198,6 @@ fun Layout(
         MainContainer(
             context,
             activity,
-            initGoogleSignin,
             initGoogleLogin,
             initEmailPasswordSignin,
         )
@@ -243,7 +226,6 @@ fun HeadingUI() {
 fun MainContainer(
     context: Context,
     activity: Activity,
-    initGoogleSignin: () -> Unit,
     initGoogleLogin: () -> Unit,
     initEmailPasswordSignin: (String, String) -> Unit,
 ) {
@@ -448,7 +430,7 @@ fun MainContainer(
         Spacer(modifier = Modifier.height(25.dp))
         Button(
             onClick = {
-                initGoogleSignin()
+                NavigationUtils.navigate(context, "signinRationale", true)
             },
             colors = ButtonColors(
                 containerColor = colorResource(id = R.color.light_background),

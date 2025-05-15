@@ -13,8 +13,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,7 +35,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults.contentPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -68,6 +65,7 @@ import com.officialsunil.pdpapplication.R
 import com.officialsunil.pdpapplication.utils.EmailAuthUtils
 import com.officialsunil.pdpapplication.utils.EmailAuthUtils.checkCredentials
 import com.officialsunil.pdpapplication.utils.GoogleAuthUtils
+import com.officialsunil.pdpapplication.utils.NavigationUtils
 import com.officialsunil.pdpapplication.utils.RegistrationCredentials
 import com.officialsunil.pdpapplication.viewui.ui.theme.PDPApplicationTheme
 
@@ -77,6 +75,23 @@ class AccountRegistrationActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Initialize launcher EARLY in onCreate
+        googleSignInLauncher = GoogleAuthUtils.getGoogleSignInLauncher(this) { success ->
+            if (success) {
+                GoogleAuthUtils.initiateGoogleSignin(
+                    context = this,
+                    scope = this.lifecycleScope,
+                    launcher = googleSignInLauncher,
+                    googleLogin = {
+                        Log.d("Account Register", "Account Registration Successful")
+                        Toast.makeText(this, "Successfully Authenticated", Toast.LENGTH_SHORT).show()
+                        NavigationUtils.navigate(this, "home", true)
+                    }
+                )
+            }
+        }
+
         setContent {
             PDPApplicationTheme {
                 AccountRegistrationUI(
@@ -90,17 +105,18 @@ class AccountRegistrationActivity : ComponentActivity() {
 
     // function to perform google sign in
     private fun initateGoogleSignin() {
-        googleSignInLauncher = GoogleAuthUtils.getGoogleSignInLauncher(this) { success ->
-            if (success) GoogleAuthUtils.initiateGoogleSignin(
-                context = this,
-                scope = this.lifecycleScope,
-                launcher = googleSignInLauncher,
-                googleLogin = {
-                    Log.d("Account Register", "Account Registeration Successful")
-                    Toast.makeText(this, "Successfully Authenticated", Toast.LENGTH_SHORT).show()
-                    navigateToHome()
-                })
-        }
+        // Just trigger sign in using the already initialized launcher
+        GoogleAuthUtils.initiateGoogleSignin(
+            context = this,
+            scope = this.lifecycleScope,
+            launcher = googleSignInLauncher,
+            googleLogin = {
+                Log.d("Account Register", "Account Registration Successful")
+                Toast.makeText(this, "Successfully Authenticated", Toast.LENGTH_SHORT).show()
+                NavigationUtils.navigate(this, "home", true)
+            }
+        )
+
     }
 
     //email signin
@@ -113,18 +129,12 @@ class AccountRegistrationActivity : ComponentActivity() {
             onSuccess = {
                 Log.d("Account Register", "Account Registeration Successful")
                 Toast.makeText(this, "Successfully Authenticated", Toast.LENGTH_SHORT).show()
-                navigateToHome()
+                NavigationUtils.navigate(this, "home", true)
             },
             onFailure = {
                 Log.d("Account Register", "Account Registeration Failed")
                 Toast.makeText(this, "Registration Failed", Toast.LENGTH_SHORT).show()
             })
-    }
-
-    private fun navigateToHome() {
-        val homeIntent = Intent(this, HomeActivity::class.java)
-        startActivity(homeIntent)
-        finish()
     }
 }
 
@@ -203,8 +213,8 @@ fun FormContentUI(
         val formContent = getFormUI()
         formContent.forEach { item ->
             val key = item.key.lowercase()
-            val isChanged = isChangedMap[key] ?: false
-            val passwordVisible = passwordVisibleMap[key] ?: false
+            val isChanged = isChangedMap[key] == true
+            val passwordVisible = passwordVisibleMap[key] == true
 
             Text(
                 text = item.heading,
@@ -240,9 +250,7 @@ fun FormContentUI(
                     .height(50.dp),
                 singleLine = true,
                 textStyle = TextStyle(
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Normal,
-                    letterSpacing = 1.2.sp
+                    fontSize = 12.sp, fontWeight = FontWeight.Normal, letterSpacing = 1.2.sp
                 ),
                 placeholder = {
                     Text(
@@ -302,13 +310,11 @@ fun FormContentUI(
                     onFailure = { errorList ->
                         if (errorList.isNotEmpty()) {
                             Toast.makeText(
-                                context,
-                                errorList.first(), // ✅ Only show the first error
+                                context, errorList.first(), // ✅ Only show the first error
                                 Toast.LENGTH_LONG
                             ).show()
                         }
-                    }
-                )
+                    })
             },
 
             colors = ButtonColors(
@@ -389,11 +395,13 @@ fun FormContentUI(
             // vertical spacer
             Spacer(modifier = Modifier.width(15.dp))
             Text(
-                text = "Continue With Google", style = TextStyle(
+                text = "Continue With Google",
+                style = TextStyle(
                     fontSize = 12.sp,
                     fontWeight = FontWeight(700),
                     color = colorResource(id = R.color.font_color),
-                ), modifier = Modifier
+                ),
+                modifier = Modifier
                     .fillMaxWidth(.8f)
                     .align(alignment = Alignment.CenterVertically),
                 textAlign = TextAlign.Center

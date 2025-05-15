@@ -1,7 +1,7 @@
 package com.officialsunil.pdpapplication.viewui
 
 import android.annotation.SuppressLint
-import android.content.Intent
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -70,6 +70,7 @@ import coil.compose.AsyncImage
 import com.officialsunil.pdpapplication.R
 import com.officialsunil.pdpapplication.utils.EmailAuthUtils
 import com.officialsunil.pdpapplication.utils.FirebaseUserCredentials
+import com.officialsunil.pdpapplication.utils.NavigationUtils
 import com.officialsunil.pdpapplication.utils.ProfileInformation
 import com.officialsunil.pdpapplication.utils.UserProfileSettings
 import com.officialsunil.pdpapplication.viewui.ui.theme.PDPApplicationTheme
@@ -80,31 +81,18 @@ class AccountCenterActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             PDPApplicationTheme {
-                AccountCenterUI(
-                    navigateTo = { destination -> navigateTo(destination) })
+                AccountCenterUI(context = this)
             }
         }
-    }
-
-    fun navigateTo(destination: String) {
-        val intent = when (destination) {
-            "home" -> Intent(this, HomeActivity::class.java)
-            "statistics" -> Intent(this, StatisticsActivity::class.java)
-            "about" -> Intent(this, AboutActivity::class.java)
-            "register" -> Intent(this, MainActivity::class.java)
-            else -> Intent(this, AccountCenterActivity::class.java)
-        }
-        startActivity(intent)
-        if (destination == "home") finish()
     }
 }
 
 // composable function
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun AccountCenterUI(navigateTo: (String) -> Unit) {
+fun AccountCenterUI(context : Context) {
     Scaffold(
-        topBar = { AccountHeadingUI(navigateTo) },
+        topBar = { AccountHeadingUI(context) },
         modifier = Modifier
             .systemBarsPadding()
             .background(colorResource(R.color.light_background))
@@ -119,13 +107,13 @@ fun AccountCenterUI(navigateTo: (String) -> Unit) {
                 .systemBarsPadding()
                 .verticalScroll(rememberScrollState())
         ) {
-            AccountContainer(navigateTo)
+            AccountContainer(context)
         }
     }
 }
 
 @Composable
-fun AccountHeadingUI(navigateTo: (String) -> Unit) {
+fun AccountHeadingUI(context: Context) {
     Column {
         Row(
             horizontalArrangement = Arrangement.spacedBy(15.dp),
@@ -137,7 +125,7 @@ fun AccountHeadingUI(navigateTo: (String) -> Unit) {
         ) {
             IconButton(
                 onClick = {
-                    navigateTo("home")
+                    NavigationUtils.navigate(context, "home")
                 }) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -163,19 +151,19 @@ fun AccountHeadingUI(navigateTo: (String) -> Unit) {
 }
 
 @Composable
-fun AccountContainer(navigateTo: (String) -> Unit) {
+fun AccountContainer(context: Context) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxSize()
             .padding(8.dp)
     ) {
-        AccountInformationContainer(navigateTo)
+        AccountInformationContainer(context)
     }
 }
 
 @Composable
-fun AccountInformationContainer(navigateTo: (String) -> Unit) {
+fun AccountInformationContainer(context: Context) {
     val profileInfo = getProfileInformation()
 
     if (profileInfo.isEmpty()) {
@@ -217,7 +205,7 @@ fun AccountInformationContainer(navigateTo: (String) -> Unit) {
                         disabledContentColor = Color.Gray,
                         disabledContainerColor = Color.LightGray
                     ), onClick = {
-                        navigateTo("register")
+                        NavigationUtils.navigate(context, "register")
                     }, modifier = Modifier
                         .fillMaxWidth(.8f)
                         .height(50.dp)
@@ -236,7 +224,7 @@ fun AccountInformationContainer(navigateTo: (String) -> Unit) {
         val photoUrl = currentUsersCredentials?.photoUrl
         Log.d("Photo", "$photoUrl")
         val isEmailVerified = currentUsersCredentials?.isEmailVerified
-        val finalPhoto = if (photoUrl != null) photoUrl else blankImageUrl
+        val finalPhoto = photoUrl ?: blankImageUrl
 
         Spacer(Modifier.height(20.dp))
 
@@ -359,13 +347,13 @@ fun AccountInformationContainer(navigateTo: (String) -> Unit) {
             }
         }
         //profile setting and other items
-        ProfileSettingsUI(navigateTo)
+        ProfileSettingsUI()
     }
 }
 
 // profile settings ui
 @Composable
-fun ProfileSettingsUI(navigateTo: (String) -> Unit) {
+fun ProfileSettingsUI() {
     val context = LocalContext.current
 
     HorizontalDivider(
@@ -384,9 +372,9 @@ fun ProfileSettingsUI(navigateTo: (String) -> Unit) {
                 .clickable {
                     Log.d("AccountCenterActivity", "Account Center Button Clicked")
                     when (item.function.lowercase()) {
-                        "statistics" -> navigateTo("statistics")
+                        "statistics" -> NavigationUtils.navigate(context, "statistics")
                         "logout" -> EmailAuthUtils.signOut(context)
-                        "about" -> navigateTo("about")
+                        "about" -> NavigationUtils.navigate(context, "about")
                         else -> ""
                     }
                 }) {

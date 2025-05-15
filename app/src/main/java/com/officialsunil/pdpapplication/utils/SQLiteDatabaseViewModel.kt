@@ -51,17 +51,19 @@ class SQLiteDatabaseViewModel(
 
             is SQLiteDatabaseEvent.SavePrediction -> {
                 val userId = state.value.userId
+                val diseaseId = state.value.diseaseId
                 val name = state.value.name
                 val image = state.value.image
                 val accuracy = state.value.accuracy
                 val timestamp = state.value.timestamp
 
                 //check for blank value
-                if(userId.isBlank() || name.isBlank() || accuracy.isBlank() || image == null || timestamp.toString().isEmpty())
+                if(userId.isBlank() || name.isBlank() || diseaseId.isBlank() || accuracy.isBlank() || image == null || timestamp.toString().isEmpty())
                     return
 
                 val predictionData = Predictions (
                     userId = userId,
+                    diseaseId = diseaseId,
                     name = name,
                     image = image,
                     accuracy = accuracy,
@@ -76,6 +78,7 @@ class SQLiteDatabaseViewModel(
                     isStoringPredictions = true,
                     userId = "",
                     name = "",
+                    diseaseId = "",
                     image = ByteArray(0),
                     accuracy = "",
                     timestamp = Timestamp.now().toString()
@@ -103,6 +106,14 @@ class SQLiteDatabaseViewModel(
                 _state.update {
                     it.copy(
                         userId = event.userId,
+                    )
+                }
+            }
+
+            is SQLiteDatabaseEvent.SetDiseaseId -> {
+                _state.update {
+                    it.copy(
+                        diseaseId = event.diseaseId,
                     )
                 }
             }

@@ -1,7 +1,6 @@
 package com.officialsunil.pdpapplication.viewui
 
 import android.annotation.SuppressLint
-import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
@@ -75,6 +74,7 @@ import com.officialsunil.pdpapplication.model.getPredictionDetails
 import com.officialsunil.pdpapplication.ui.theme.PDPApplicationTheme
 import com.officialsunil.pdpapplication.utils.DiseaseInformation
 import com.officialsunil.pdpapplication.utils.FirebaseUserCredentials
+import com.officialsunil.pdpapplication.utils.NavigationUtils
 import com.officialsunil.pdpapplication.utils.PredictionState
 import com.officialsunil.pdpapplication.utils.SQLiteDatabaseEvent
 import com.officialsunil.pdpapplication.utils.SQLiteDatabaseSchema
@@ -135,13 +135,6 @@ class PredictionActivity : ComponentActivity() {
         }
     }
 
-    //    function to close the window
-    fun closePreviewWindow() {
-        val cameraIntent = Intent(this@PredictionActivity, CameraActivity::class.java)
-        startActivity(cameraIntent)
-        finish()
-    }
-
     // function to save the image to sqlite database
     suspend fun savePredictionToDb(state: PredictionState, onEvent: (SQLiteDatabaseEvent) -> Unit) {
         // check if the data is already uploaded
@@ -153,6 +146,7 @@ class PredictionActivity : ComponentActivity() {
         //get the current user's uid
         val currentUser = FirebaseUserCredentials.getCurrentUserCredentails()
         val userId = currentUser?.uid.toString()
+        val diseaseId = userId + "_" + Timestamp.now().toString()
 
         // convert image bitmap to the Bytearray
         val imageByteArray =
@@ -160,19 +154,21 @@ class PredictionActivity : ComponentActivity() {
 
         // set the values
         onEvent(SQLiteDatabaseEvent.SetUserId(userId))
+        onEvent(SQLiteDatabaseEvent.SetDiseaseId(diseaseId))
         onEvent(SQLiteDatabaseEvent.SetPredictedName(diseaseName))
         onEvent(SQLiteDatabaseEvent.SetPredictedImage(imageByteArray))
         onEvent(SQLiteDatabaseEvent.SetAccuracy(diseaseAccuracy))
         onEvent(SQLiteDatabaseEvent.SetTimestamp(Timestamp.now().toString()))
 
         //  check the data is is available or not
+        Log.d("Prediction", "Disease Id : ${state.diseaseId}")
         Log.d("Prediction", "User Id : ${state.userId}")
         Log.d("Prediction", "Name : ${state.name}")
         Log.d("Prediction", "Image : ${state.image}")
         Log.d("Prediction", "Accuracy : ${state.accuracy}")
 
         // save the prediction when all the data are availabel and set
-        if (state.userId.isEmpty() || state.name.isEmpty() || state.image.isEmpty() || state.accuracy.isEmpty()) Toast.makeText(
+        if (state.userId.isEmpty() || state.name.isEmpty() || state.diseaseId.isEmpty() || state.image.isEmpty() || state.accuracy.isEmpty()) Toast.makeText(
             this, "Incomplete Data to store", Toast.LENGTH_SHORT
         ).show()
         else {
@@ -235,7 +231,7 @@ fun PredictionHeader(
         val context = LocalContext.current
         IconButton(
             onClick = {
-                if (context is PredictionActivity) context.closePreviewWindow()
+                NavigationUtils.navigate(context, "camera", true)
             }) {
             Icon(
                 imageVector = Icons.Default.ArrowBackIosNew,

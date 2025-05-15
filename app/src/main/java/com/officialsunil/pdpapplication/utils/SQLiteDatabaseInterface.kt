@@ -27,4 +27,7 @@ interface SQLiteDatabaseInterface {
 
     @Query("SELECT* FROM Predictions WHERE userId = :userId ORDER BY timestamp DESC")
     fun getPredictionListOrderedByTimestamp(userId : String): Flow<List<Predictions>>
+
+//    // define the function for migrating the database from old to new
+//    fun migrateDatabase(dbVersion : DatabaseVersion)
 }

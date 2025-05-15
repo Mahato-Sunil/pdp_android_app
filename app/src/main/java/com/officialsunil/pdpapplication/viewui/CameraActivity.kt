@@ -1,7 +1,6 @@
 package com.officialsunil.pdpapplication.viewui
 
 import android.content.Context
-import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Matrix
 import android.media.MediaActionSound
@@ -69,15 +68,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.officialsunil.pdpapplication.R
 import com.officialsunil.pdpapplication.data.PdpModelClassifier
 import com.officialsunil.pdpapplication.model.Classification
+import com.officialsunil.pdpapplication.model.PotatoDiseaseAnalyzer
 import com.officialsunil.pdpapplication.ui.theme.PDPApplicationTheme
 import com.officialsunil.pdpapplication.utils.CameraPreview
 import com.officialsunil.pdpapplication.utils.CameraViewModel
 import com.officialsunil.pdpapplication.utils.ImagePreview
+import com.officialsunil.pdpapplication.utils.NavigationUtils
 import com.officialsunil.pdpapplication.utils.PermissionHandler
-import com.officialsunil.pdpapplication.model.PotatoDiseaseAnalyzer
 import com.officialsunil.pdpapplication.utils.saveImageToCache
 import com.officialsunil.pdpapplication.utils.scannerOverlay
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -101,9 +100,7 @@ class CameraActivity : ComponentActivity() {
         //on back pressed
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                val homeIntent = Intent(this@CameraActivity, HomeActivity::class.java)
-                startActivity(homeIntent)
-                finish()
+                NavigationUtils.navigate(this@CameraActivity, "home", true)
             }
         })
     }
@@ -151,11 +148,7 @@ class CameraActivity : ComponentActivity() {
                     val safeCropTop = cropTop.coerceIn(0, rotatedBitmap.height - boxSize)
 
                     val croppedBitmap = Bitmap.createBitmap(
-                        rotatedBitmap,
-                        safeCropLeft,
-                        safeCropTop,
-                        boxSize,
-                        boxSize
+                        rotatedBitmap, safeCropLeft, safeCropTop, boxSize, boxSize
                     )
                     onPhotoCapture(croppedBitmap)
                     image.close()
@@ -211,7 +204,6 @@ class CameraActivity : ComponentActivity() {
             showPrediction = { showPrediction = it },
             controller = controller,
             cameraViewModel = cameraViewModel,
-            coroutineScope = coroutineScope,
             classifications = classification
         )
 
@@ -252,7 +244,6 @@ class CameraActivity : ComponentActivity() {
         showPrediction: (Boolean) -> Unit,
         controller: LifecycleCameraController,
         cameraViewModel: CameraViewModel,
-        coroutineScope: CoroutineScope,
         classifications: List<Classification>
     ) {
         Box(
@@ -301,7 +292,7 @@ class CameraActivity : ComponentActivity() {
                 }
 
                 //flash light icon
-                var flashModeState by remember { mutableStateOf("AUTO") }
+                var flashModeState by remember { mutableStateOf("OFF") }
 
                 IconButton(
                     onClick = {
@@ -315,7 +306,6 @@ class CameraActivity : ComponentActivity() {
                                 controller.imageCaptureFlashMode = FLASH_MODE_AUTO
                                 flashModeState = "AUTO"
                             }
-
 
                             else -> {
                                 controller.imageCaptureFlashMode = FLASH_MODE_ON
@@ -339,11 +329,7 @@ class CameraActivity : ComponentActivity() {
                 val context = LocalContext.current
                 IconButton(
                     onClick = {
-                        coroutineScope.launch {
-                            val homeIntent = Intent(context, HomeActivity::class.java)
-                            startActivity(homeIntent)
-                            finish()
-                        }
+                        NavigationUtils.navigate(context, "home", true)
                     }) {
                     // camera switch button
                     Icon(

@@ -8,24 +8,18 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
@@ -40,9 +34,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -57,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.officialsunil.pdpapplication.R
 import com.officialsunil.pdpapplication.ui.theme.PDPApplicationTheme
+import com.officialsunil.pdpapplication.utils.NavigationUtils
 
 class HomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,43 +57,18 @@ class HomeActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             PDPApplicationTheme {
-                InitHomeActivityUI(
-                    initCameraActivity = { navigateToCameraActivity() },
-                    initAccountCenter = { navigateToAccountCenter() })
+                InitHomeActivityUI()
             }
         }
-    }
-
-    /* ========================================================================
-    Backends and Logics
-    ========================================================================
-    */
-
-    // function to move to the camera activity
-    fun navigateToCameraActivity() {
-        val cameraIntent = Intent(this, CameraActivity::class.java)
-        startActivity(cameraIntent)
-        finish()
-    }
-
-    //    function to open the account center
-    fun navigateToAccountCenter() {
-        val accountIntent = Intent(this, AccountCenterActivity::class.java)
-        startActivity(accountIntent)
     }
 }
 
 //  activity layout
 @Composable
-fun InitHomeActivityUI(
-    initCameraActivity: () -> Unit, initAccountCenter: () -> Unit
-) {
-    Scaffold(
-        topBar = { HomeHeadingUI() },
+fun InitHomeActivityUI() {
+    Scaffold(topBar = { HomeHeadingUI() },
         bottomBar = {
-        HomeButtonContainer(
-            initCameraActivity, initAccountCenter
-        )
+        HomeButtonContainer()
     }) { innerPadding ->
         Column(
 //            horizontalAlignment = Alignment.CenterHorizontally,
@@ -133,14 +101,12 @@ fun HomeHeadingUI() {
 //            .background(colorResource(R.color.light_background))
     ) {
         Text(
-            text = "Potato Disease Prediction",
-            style = TextStyle(
+            text = "Potato Disease Prediction", style = TextStyle(
                 color = colorResource(R.color.font_color),
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = TextUnit(1.5f, TextUnitType.Sp)
-            ),
-            modifier = Modifier
+            ), modifier = Modifier
                 .fillMaxWidth()
                 .height(40.dp)
                 .padding(8.dp)
@@ -191,8 +157,7 @@ fun HomeContainer() {
                     letterSpacing = 1.2.sp,
                     textDecoration = TextDecoration.Underline
                 ), modifier = Modifier.clickable {
-                    val diagnosesIntent = Intent(localContext, DiagnosesListActivity::class.java)
-                    localContext.startActivity(diagnosesIntent)
+                    NavigationUtils.navigate(localContext, "diagnosesList")
                 })
         }
 
@@ -206,9 +171,8 @@ fun HomeContainer() {
                 .fillMaxWidth()
                 .background(colorResource(R.color.light_card_background))
                 .clickable {
-                    //pass the path and the  prediction result
-                    val predictionIntent = Intent(localContext, PredictionActivity::class.java)
-                    localContext.startActivity(predictionIntent)
+                    NavigationUtils.navigate(localContext, "prediction")
+
                 }) {
             Image(
                 painter = painterResource(R.drawable.pdp_logo),
@@ -234,7 +198,7 @@ fun HomeContainer() {
                 )
 
                 Text(
-                    text = "Late Blignt", style = TextStyle(
+                    text = "Late Blight", style = TextStyle(
                         color = colorResource(R.color.font_color),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium,
@@ -261,20 +225,17 @@ fun HomeContainer() {
 
 // bottom section
 @Composable
-fun HomeButtonContainer(
-    initCameraActivity: () -> Unit, initAccountCenter: () -> Unit
-) {
+fun HomeButtonContainer() {
     val context = LocalContext.current
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceEvenly,
         modifier = Modifier
-//            .systemBarsPadding()
+            .systemBarsPadding()
             .fillMaxWidth()
             .height(100.dp)
             .background(Color.White)
-//            .background(colorResource(R.color.light_background))
     ) {
         //home
         IconButton(
@@ -291,14 +252,15 @@ fun HomeButtonContainer(
                 imageVector = Icons.Default.House,
                 contentDescription = "Home Icon",
                 tint = Color(4, 32, 129, 255),
-                modifier = Modifier
-                    .fillMaxSize()
+                modifier = Modifier.fillMaxSize()
             )
         }
 
         // shutter button
         IconButton(
-            onClick = { initCameraActivity() }) {
+            onClick = {
+                NavigationUtils.navigate(context, "camera", true)
+            }) {
             Icon(
                 imageVector = Icons.Default.CameraEnhance,
                 contentDescription = "Camera Icon",
@@ -309,7 +271,7 @@ fun HomeButtonContainer(
 
         IconButton(
             onClick = {
-                initAccountCenter()
+                NavigationUtils.navigate(context, "accountCenter")
             }) {
             Icon(
                 imageVector = Icons.Default.Person,
@@ -325,9 +287,6 @@ fun HomeButtonContainer(
 @Composable
 fun PreviewHomeActivityUI() {
     PDPApplicationTheme {
-        InitHomeActivityUI(
-            initCameraActivity = { /* Dummy preview action */ },
-            initAccountCenter = { /* Dummy preview action */ }
-        )
+        InitHomeActivityUI()
     }
 }

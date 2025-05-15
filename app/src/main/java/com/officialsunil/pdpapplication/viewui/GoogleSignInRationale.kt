@@ -34,7 +34,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -47,7 +46,6 @@ import com.officialsunil.pdpapplication.R
 import com.officialsunil.pdpapplication.utils.GoogleAuthUtils
 import com.officialsunil.pdpapplication.utils.SigninigRationale
 import com.officialsunil.pdpapplication.viewui.ui.theme.PDPApplicationTheme
-import kotlinx.coroutines.CoroutineScope
 
 class GoogleSignInRationale : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,7 +54,6 @@ class GoogleSignInRationale : ComponentActivity() {
         setContent {
             PDPApplicationTheme {
                 ShowRationaleUI(
-                    scope = lifecycleScope,
                     navigateToHome = { navigateToHome() },
                     initGoogleLogin = { initGoogleLogin() })
             }
@@ -71,7 +68,7 @@ class GoogleSignInRationale : ComponentActivity() {
     }
 
     // function to initiate google login
-    // launcher for the goolge authentication
+    // launcher for the google authentication
     private val googleSignInLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK) Log.d(
@@ -89,7 +86,7 @@ class GoogleSignInRationale : ComponentActivity() {
                 runOnUiThread {
                     val homeIntent = Intent(this, HomeActivity::class.java)
                     startActivity(homeIntent)
-                    Toast.makeText(this, "Authentication Successfull", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Authentication Successful", Toast.LENGTH_SHORT).show()
                     finish()
                 }
             })
@@ -100,7 +97,6 @@ class GoogleSignInRationale : ComponentActivity() {
 // code for showing the permission rationale
 @Composable
 fun ShowRationaleUI(
-    scope: CoroutineScope,
     navigateToHome: () -> Unit,
     initGoogleLogin: () -> Unit
 ) {
@@ -137,7 +133,7 @@ fun ShowRationaleUI(
         Spacer(Modifier.height(10.dp))
         RationaleDescription()
         Spacer(Modifier.height(20.dp))
-        BottomNavigationButton(scope, navigateToHome, initGoogleLogin)
+        BottomNavigationButton(navigateToHome, initGoogleLogin)
     }
 }
 
@@ -204,7 +200,6 @@ fun RationaleDescription() {
 // bottom buttons
 @Composable
 fun BottomNavigationButton(
-    scope: CoroutineScope,
     navigateToHome: () -> Unit,
     initGoogleLogin: () -> Unit
 ) {
@@ -235,7 +230,7 @@ fun BottomNavigationButton(
             disabledContentColor = Color.Gray,
             disabledContainerColor = Color.LightGray
         ), onClick = {
-            // start google signin intent
+            // start google sign in intent
             initGoogleLogin()
         }, modifier = Modifier
             .fillMaxWidth(.8f)
@@ -247,7 +242,7 @@ fun BottomNavigationButton(
     }
 }
 
-// function to  get the sigini rational
+// function to  get the sign in rational
 fun populateSigningRationale(): List<SigninigRationale> {
     val descriptionList = listOf(
         SigninigRationale("Keep Track of Diseases"),

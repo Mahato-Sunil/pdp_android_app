@@ -1,9 +1,11 @@
 package com.officialsunil.pdpapplication.viewui
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -32,6 +34,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,7 +42,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -47,18 +49,52 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.room.Room
 import com.officialsunil.pdpapplication.R
 import com.officialsunil.pdpapplication.utils.NavigationUtils
+import com.officialsunil.pdpapplication.utils.PredictionState
+import com.officialsunil.pdpapplication.utils.SQLiteDatabaseSchema
+import com.officialsunil.pdpapplication.utils.SQLiteDatabaseViewModel
 import com.officialsunil.pdpapplication.viewui.ui.theme.PDPApplicationTheme
+import kotlin.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 
 class StatisticsActivity : ComponentActivity() {
+    // initiating the database  for displaying the database
+    val db by lazy {
+        Room.databaseBuilder(
+            applicationContext, SQLiteDatabaseSchema::class.java, name = "predictions.db"
+        ).build()
+    }
+
+    val viewModel by viewModels<SQLiteDatabaseViewModel>(
+        factoryProducer = {
+            object : ViewModelProvider.Factory {
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    return SQLiteDatabaseViewModel(db.sqliteDatabaseInterface) as T
+                }
+            }
+        })
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // get the disease id from the previous intent
+        val diseaseIdRef = intent.getStringExtra("diseaseId")
+
         setContent {
             PDPApplicationTheme {
-
+                val state by viewModel.state.collectAsState()
+                StatisticsUILayout(
+                    context = this,
+                    state = state,
+                    diseaseIdRef = diseaseIdRef.toString()
+                )
             }
         }
     }
@@ -66,9 +102,9 @@ class StatisticsActivity : ComponentActivity() {
 
 //ui for the statistics activity
 @Composable
-fun StatisticsUILayout(diseaseName: String) {
+fun StatisticsUILayout(context: Context, state: PredictionState, diseaseIdRef : String) {
     Scaffold(
-        topBar = { StatsHeading(diseaseName = diseaseName) },
+        topBar = { StatsHeading(state = state, diseaseIdRef = diseaseIdRef) },
         modifier = Modifier.systemBarsPadding()
     ) { innerPadding ->
         StatsContainer(
@@ -79,7 +115,7 @@ fun StatisticsUILayout(diseaseName: String) {
 
 // heading section
 @Composable
-fun StatsHeading(diseaseName: String) {
+fun StatsHeading(state: PredictionState, diseaseIdRef: String) {
     val context = LocalContext.current
 
     Column(
@@ -95,7 +131,7 @@ fun StatsHeading(diseaseName: String) {
         ) {
             IconButton(
                 onClick = {
-                    NavigationUtils.Navigate(context, "home")
+                    NavigationUtils.navigate(context, "diagnosesList")
                 }) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -105,7 +141,7 @@ fun StatsHeading(diseaseName: String) {
             }
 
             Text(
-                text = diseaseName, style = TextStyle(
+                text = diseaseIdRef, style = TextStyle(
                     fontWeight = FontWeight.SemiBold, fontSize = 22.sp, letterSpacing = 1.2.sp
                 ), textAlign = TextAlign.Start, modifier = Modifier.wrapContentSize()
             )
@@ -264,8 +300,8 @@ fun SectionCard(title: String, content: String) {
     }
 }
 
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun PreviewUI() {
-    StatisticsUILayout(diseaseName = "Potato Late Blight")
-}
+//@Preview(showBackground = true, showSystemUi = true)
+//@Composable
+//fun PreviewUI() {
+//    StatisticsUILayout(diseaseName = "Potato Late Blight")
+//}

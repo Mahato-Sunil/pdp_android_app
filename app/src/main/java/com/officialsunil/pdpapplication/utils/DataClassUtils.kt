@@ -8,6 +8,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.Blob
+import java.util.UUID
 
 
 // create a data class for the account information section
@@ -72,6 +73,7 @@ data class DiagnosesList(
 @Entity(tableName = "Predictions")
 data class Predictions(
     val userId: String,
+    val diseaseId: String?,
     val image: ByteArray,
     val name: String,
     val accuracy: String,
@@ -88,6 +90,13 @@ data class PredictionState(
     val name: String = "",
     val accuracy: String = "",
     val timestamp: String = Timestamp.now().toString(),
+    val diseaseId: String = "",
     val isStoringPredictions: Boolean = false,
     val sortType: SortType = SortType.TIMESTAMP        // creating the default sort type as Timestampt
 )
+//
+//// data class to store the version  of the database for migration
+//data class DatabaseVersion (
+//    val versionOld: Int,
+//    val versionNew: Int
+//)
