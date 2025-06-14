@@ -107,29 +107,32 @@ object FirebaseFirestoreUtils {
     // fetch disease information based on the disease id
     suspend fun fetchDiseaseInfo(
         userId: String, diseaseId: String, onError: (String) -> Unit
-    ): RetrievePredictionData? {
+    ): PredictionData? {
         return try {
             val snapshot = fireDb.collection(DBNAME).document(userId).collection("Predictions")
                 .whereEqualTo("diseaseId", diseaseId).get().await()
 
-            //check for existence of user data
-            val retrievePredictionData = snapshot.documents.mapNotNull { info ->
-                info.data?.let {
-                    PredictionData(
-                        userId = it["userId"] as? String ?: "",
-                        diseaseId = it["diseaseId"] as? String ?: "",
-                        imageBase64String = it["imageBase64String"] as? String ?: "",
-                        predictedName = it["predictedName"] as? String ?: "",
-                        accuracy = it["accuracy"] as? String ?: "0.0",
-                        timestamp = it["timestamp"] as? Timestamp ?: Timestamp.now()
-                    )
-                }
+            val doc = snapshot.documents.firstOrNull()
+
+            if (doc != null && doc.data != null) {
+                val it = doc.data!!
+                PredictionData(
+                    userId = it["userId"] as? String ?: "",
+                    diseaseId = it["diseaseId"] as? String ?: "",
+                    imageBase64String = it["imageBase64String"] as? String ?: "",
+                    predictedName = it["predictedName"] as? String ?: "",
+                    accuracy = it["accuracy"] as? String ?: "0.0",
+                    timestamp = it["timestamp"] as? Timestamp ?: Timestamp.now()
+                )
+            } else {
+                onError("No prediction data found")
+                null
             }
-            RetrievePredictionData(retrievePredictionData)
         } catch (err: Exception) {
             Log.e(TAG, "Error: ${err.message}")
             onError("Error! Failed to retrieve data")
             null
         }
     }
+
 }

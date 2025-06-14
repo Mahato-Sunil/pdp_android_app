@@ -6,14 +6,13 @@ import android.content.Intent
 import com.officialsunil.pdpapplication.viewui.AboutActivity
 import com.officialsunil.pdpapplication.viewui.AccountCenterActivity
 import com.officialsunil.pdpapplication.viewui.CameraActivity
-//import com.officialsunil.pdpapplication.viewui.DiagnosesListActivity
+import com.officialsunil.pdpapplication.viewui.DiagnosesListActivity
 import com.officialsunil.pdpapplication.viewui.DiseaseAnalysis
 import com.officialsunil.pdpapplication.viewui.GoogleSignInRationale
 import com.officialsunil.pdpapplication.viewui.HomeActivity
 import com.officialsunil.pdpapplication.viewui.MainActivity
 import com.officialsunil.pdpapplication.viewui.PredictionActivity
 import com.officialsunil.pdpapplication.viewui.StatisticsActivity
-import com.officialsunil.pdpapplication.viewui.Test
 
 object NavigationUtils {
     fun navigate(
@@ -25,8 +24,7 @@ object NavigationUtils {
             "home" -> Intent(context, HomeActivity::class.java)
             "statistics" -> Intent(context, StatisticsActivity::class.java)
             "camera" -> Intent(context, CameraActivity::class.java)
-//            "diagnosesList" -> Intent(context, DiagnosesListActivity::class.java)
-            "diagnosesList" -> Intent(context, Test::class.java)   // for test
+            "diagnosesList" -> Intent(context, DiagnosesListActivity::class.java)
             "accountCenter" -> Intent(context, AccountCenterActivity::class.java)
             "prediction" -> Intent(context, PredictionActivity::class.java)
             "signinRationale" -> Intent(context, GoogleSignInRationale::class.java)

@@ -67,7 +67,7 @@ import com.officialsunil.pdpapplication.utils.firebase.FirebaseUserCredentials
 import com.officialsunil.pdpapplication.utils.firebase.ImageToBase64
 import kotlinx.coroutines.launch
 
-class Test : ComponentActivity() {
+class DiagnosesListActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
