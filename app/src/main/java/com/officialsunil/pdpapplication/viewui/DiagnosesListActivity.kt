@@ -1,4 +1,7 @@
-// DiagnosesListActivity.kt
+/*
+this class is responsible to show the prediction history by fetching the data from the firestore database
+
+ */
 
 package com.officialsunil.pdpapplication.viewui
 
@@ -8,7 +11,6 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,7 +27,6 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DoubleArrow
@@ -37,121 +38,119 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
-import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.room.Room
 import com.officialsunil.pdpapplication.R
+import com.officialsunil.pdpapplication.ui.theme.PDPApplicationTheme
 import com.officialsunil.pdpapplication.utils.CustomDateTimeFormatter
 import com.officialsunil.pdpapplication.utils.NavigationUtils
-import com.officialsunil.pdpapplication.utils.PredictionState
-import com.officialsunil.pdpapplication.utils.SQLiteDatabaseEvent
-import com.officialsunil.pdpapplication.utils.SQLiteDatabaseSchema
-import com.officialsunil.pdpapplication.utils.SQLiteDatabaseViewModel
-import com.officialsunil.pdpapplication.utils.byteArrayToBitmap
-import com.officialsunil.pdpapplication.viewui.ui.theme.PDPApplicationTheme
+import com.officialsunil.pdpapplication.utils.RetrievePredictionData
+import com.officialsunil.pdpapplication.utils.firebase.FirebaseFirestoreUtils
+import com.officialsunil.pdpapplication.utils.firebase.FirebaseUserCredentials
+import com.officialsunil.pdpapplication.utils.firebase.ImageToBase64
+import kotlinx.coroutines.launch
 
-class DiagnosesListActivity : ComponentActivity() {
-    // initiating the database  for displaying the database
-    val db by lazy {
-        Room.databaseBuilder(
-            applicationContext, SQLiteDatabaseSchema::class.java, name = "predictions.db"
-        ).build()
-    }
-
-    val viewModel by viewModels<SQLiteDatabaseViewModel>(
-        factoryProducer = {
-            object : ViewModelProvider.Factory {
-                override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return SQLiteDatabaseViewModel(db.sqliteDatabaseInterface) as T
-                }
-            }
-        })
-
+class Test : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             PDPApplicationTheme {
-                val state by viewModel.state.collectAsState()
-                DiagnosesListScreen(
-                    context = this@DiagnosesListActivity,
-                    state = state,
-                    onEvent = viewModel::onEvent
-                )
+                DiagnosesListScreen()
             }
         }
     }
 }
 
 @Composable
-fun DiagnosesListScreen(
-    context: Context, state: PredictionState, onEvent: (SQLiteDatabaseEvent) -> Unit
-) {
+fun DiagnosesListScreen() {
+    val context = LocalContext.current
+
     Scaffold(
-        topBar = { DiagnosesHeadingUI(context = context) },
+        topBar = { DiagnosesHeadingUI(context) },
         modifier = Modifier
+            .background(Color.White)
             .systemBarsPadding()
-            .background(colorResource(R.color.light_background))
+
     ) { innerPadding ->
         DiagnosesContainer(
-            modifier = Modifier.padding(innerPadding),
-            context = context,
-            state = state,
-            onEvent = onEvent
+            modifier = Modifier.padding(innerPadding), context = context
         )
     }
 }
 
-// other ui for diagnoses heading and container
 @Composable
 fun DiagnosesContainer(
-    modifier: Modifier = Modifier,
-    context: Context,
-    state: PredictionState,
-    onEvent: (SQLiteDatabaseEvent) -> Unit
+    modifier: Modifier = Modifier, context: Context
 ) {
+    // fetch the data from the firebase using coroutine scope
+    val coroutineScope = rememberCoroutineScope()
+    var predictionData by remember { mutableStateOf<RetrievePredictionData?>(null) }
+    var isDataAvailable by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        coroutineScope.launch {
+            val data = FirebaseFirestoreUtils.fetchAllDiseaseInfo(
+                userId = FirebaseUserCredentials.getCurrentUserCredentails()?.uid.toString(),
+                onError = {
+                    isDataAvailable = false
+                })
+
+            if (data != null && data.retrievePredictionData.isNotEmpty()) {
+                predictionData = data
+                isDataAvailable = true
+            } else {
+                isDataAvailable = false
+            }
+        }
+    }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
             .fillMaxSize()
-            .background(Color.White)
             .padding(16.dp)
+            .background(Color.White)
     ) {
-        if (state.predictions.isEmpty()) {
+        // get the predictions from the firestore
+        // if error show no prediction rationale else show the diagnoses list
+
+        if (!isDataAvailable) {
             NoPredictionsRationale(onTakePictureClicked = {
                 NavigationUtils.navigate(
-                    context,
-                    "camera"
+                    context, "camera"
                 )
             })
         } else {
-            DiagnosesList(state, onEvent, onItemClicked = { dataToPass ->
+            DiagnosesList(predictionData, onItemClicked = { dataToPass ->
                 // pass the disease id
                 NavigationUtils.navigate(
-                    context = context,
-                    destination = "statistics",
-                    data = dataToPass
+                    context = context, destination = "statistics", data = dataToPass
                 )
             })
+
         }
     }
 }
 
+// prediction rationale to show if there is no any prediction data
 @Composable
 fun NoPredictionsRationale(
     onTakePictureClicked: () -> Unit
@@ -180,83 +179,7 @@ fun NoPredictionsRationale(
     }
 }
 
-@Composable
-fun DiagnosesList(
-    state: PredictionState, onEvent: (SQLiteDatabaseEvent) -> Unit, onItemClicked: (String) -> Unit
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier
-                .fillMaxWidth(.9f)
-                .background(Color(240, 245, 255, 255))
-                .padding(8.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.DoubleArrow,
-                contentDescription = "Info Icon",
-                tint = Color.Blue
-            )
-
-            Text(
-                text = "Click to View Complete Details", style = TextStyle(
-                    fontSize = 12.sp, fontWeight = FontWeight.Normal, letterSpacing = 1.sp
-                ), color = Color.Blue, modifier = Modifier.align(Alignment.CenterVertically)
-            )
-        }
-    }
-    LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxSize()
-    ) {
-        items(state.predictions) { prediction ->
-            // convert the blog back to bitmap
-            val convertedBitmap = byteArrayToBitmap(prediction.image)
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(90.dp)
-                    .clickable { onItemClicked(prediction.diseaseId) }
-                    .background(Color.White)
-                    .padding(horizontal = 16.dp)) {
-
-                Image(
-                    painter = if (convertedBitmap != null) {
-                        BitmapPainter(convertedBitmap.asImageBitmap())
-                    } else {
-                        painterResource(R.drawable.no_picture)
-                    },
-                    contentDescription = prediction.name,
-                    modifier = Modifier
-                        .size(60.dp)
-                        .clip(MaterialTheme.shapes.small)
-                        .background(Color.LightGray)
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-                Column(
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = prediction.name, style = MaterialTheme.typography.titleMedium
-                    )
-
-                    // get the formatted time from the timestamp
-                    val formattedTime = CustomDateTimeFormatter.formatDateTime(prediction.timestamp)
-//                    val formattedTime= prediction.timestamp
-                    Log.d("Firebase Time", formattedTime)
-                    Text(
-                        text = formattedTime,
-                        style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray)
-                    )
-                }
-            }
-            HorizontalDivider(color = Color.LightGray, thickness = 1.dp)
-        }
-    }
-}
-
+// diagnostic heading
 @Composable
 fun DiagnosesHeadingUI(context: Context) {
     Column {
@@ -292,5 +215,88 @@ fun DiagnosesHeadingUI(context: Context) {
             thickness = 1.dp,
             color = Color.LightGray
         )
+    }
+}
+
+// composable function to show the diagnoses list
+@Composable
+fun DiagnosesList(
+    predictionData: RetrievePredictionData?, onItemClicked: (String) -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier
+                .fillMaxWidth(.9f)
+                .background(Color(240, 245, 255, 255))
+                .padding(8.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.DoubleArrow,
+                contentDescription = "Info Icon",
+                tint = Color.Blue
+            )
+
+            Text(
+                text = "Click to View Complete Details", style = TextStyle(
+                    fontSize = 12.sp, fontWeight = FontWeight.Normal, letterSpacing = 1.sp
+                ), color = Color.Blue, modifier = Modifier.align(Alignment.CenterVertically)
+            )
+        }
+    }
+    // columns to show the data
+    LazyColumn(
+        verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxSize()
+    ) {
+
+        items(predictionData?.retrievePredictionData?.size ?: 0) { index ->
+            val prediction = predictionData?.retrievePredictionData?.get(index) ?: return@items
+            // convert the base64 string back to image
+            val convertedBitmap = ImageToBase64.convertBase64ToImage(prediction.imageBase64String)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(90.dp)
+                    .clickable { onItemClicked(prediction.diseaseId.toString()) }
+                    .background(Color.White)
+                    .padding(horizontal = 16.dp)) {
+
+                Image(
+                    painter = if (convertedBitmap != null) {
+                        BitmapPainter(convertedBitmap.asImageBitmap())
+                    } else {
+                        painterResource(R.drawable.no_picture)
+                    },
+                    contentDescription = prediction.predictedName,
+                    modifier = Modifier
+                        .size(60.dp)
+                        .clip(MaterialTheme.shapes.small)
+                        .background(Color.LightGray)
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Column(
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = prediction.predictedName,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    // get the formatted time from the timestamp
+                    val formattedTime =
+                        CustomDateTimeFormatter.formatDateTime(prediction.timestamp.toString())
+//                    val formattedTime= prediction.timestamp
+                    Log.d("Firebase Time", formattedTime)
+                    Text(
+                        text = formattedTime,
+                        style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray)
+                    )
+                }
+            }
+            HorizontalDivider(color = Color.LightGray, thickness = 1.dp)
+        }
     }
 }

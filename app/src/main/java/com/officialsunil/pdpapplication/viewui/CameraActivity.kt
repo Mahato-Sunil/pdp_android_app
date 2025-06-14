@@ -64,18 +64,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.scale
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.officialsunil.pdpapplication.R
-import com.officialsunil.pdpapplication.data.PdpModelClassifier
-import com.officialsunil.pdpapplication.model.Classification
-import com.officialsunil.pdpapplication.model.PotatoDiseaseAnalyzer
+import com.officialsunil.pdpapplication.tfLiteModule.LiteRtClassifier
+import com.officialsunil.pdpapplication.tfLiteModule.TFLiteModelAnalyzer
 import com.officialsunil.pdpapplication.ui.theme.PDPApplicationTheme
-import com.officialsunil.pdpapplication.utils.CameraPreview
 import com.officialsunil.pdpapplication.utils.CameraViewModel
-import com.officialsunil.pdpapplication.utils.ImagePreview
+import com.officialsunil.pdpapplication.utils.Classification
 import com.officialsunil.pdpapplication.utils.NavigationUtils
 import com.officialsunil.pdpapplication.utils.PermissionHandler
-import com.officialsunil.pdpapplication.utils.saveImageToCache
 import com.officialsunil.pdpapplication.utils.scannerOverlay
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -150,7 +148,10 @@ class CameraActivity : ComponentActivity() {
                     val croppedBitmap = Bitmap.createBitmap(
                         rotatedBitmap, safeCropLeft, safeCropTop, boxSize, boxSize
                     )
-                    onPhotoCapture(croppedBitmap)
+
+                    val resizedBitmap =
+                        croppedBitmap.scale(224, 224)   // scale the bitmap to 224 by 224 size
+                    onPhotoCapture(resizedBitmap)
                     image.close()
                 }
 
@@ -173,12 +174,12 @@ class CameraActivity : ComponentActivity() {
         }
 
         val analyzer = remember {
-            PotatoDiseaseAnalyzer(
-                classifier = PdpModelClassifier(context = applicationContext), onResult = {
+            TFLiteModelAnalyzer(
+                classifier = LiteRtClassifier(context = applicationContext), onResult = {
                     classification = it
                 })
-
         }
+
         val controller = remember {
             LifecycleCameraController(applicationContext).apply {
                 setEnabledUseCases(
@@ -228,7 +229,10 @@ class CameraActivity : ComponentActivity() {
 
                 },
                 onSave = { prediction ->
+                    freezePrediction = null
+                    showPrediction = false
                     saveImageToCache(this@CameraActivity, bitmaps, prediction)
+
                 },
 
                 coroutineScope = coroutineScope,
@@ -246,6 +250,7 @@ class CameraActivity : ComponentActivity() {
         cameraViewModel: CameraViewModel,
         classifications: List<Classification>
     ) {
+        val context = LocalContext.current  // for camera controller
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -279,6 +284,7 @@ class CameraActivity : ComponentActivity() {
 //            camera switch
                 IconButton(
                     onClick = {
+                        // get the camera provider
                         controller.cameraSelector =
                             if (controller.cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA) CameraSelector.DEFAULT_FRONT_CAMERA
                             else CameraSelector.DEFAULT_BACK_CAMERA
@@ -325,8 +331,6 @@ class CameraActivity : ComponentActivity() {
                     )
                 }
 
-                // close button
-                val context = LocalContext.current
                 IconButton(
                     onClick = {
                         NavigationUtils.navigate(context, "home", true)

@@ -68,8 +68,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import coil.compose.AsyncImage
 import com.officialsunil.pdpapplication.R
-import com.officialsunil.pdpapplication.utils.EmailAuthUtils
-import com.officialsunil.pdpapplication.utils.FirebaseUserCredentials
+import com.officialsunil.pdpapplication.utils.firebase.EmailAuthUtils
+import com.officialsunil.pdpapplication.utils.firebase.FirebaseUserCredentials
 import com.officialsunil.pdpapplication.utils.NavigationUtils
 import com.officialsunil.pdpapplication.utils.ProfileInformation
 import com.officialsunil.pdpapplication.utils.UserProfileSettings
@@ -90,7 +90,7 @@ class AccountCenterActivity : ComponentActivity() {
 // composable function
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun AccountCenterUI(context : Context) {
+fun AccountCenterUI(context: Context) {
     Scaffold(
         topBar = { AccountHeadingUI(context) },
         modifier = Modifier
@@ -219,12 +219,8 @@ fun AccountInformationContainer(context: Context) {
         }
     } else {
         val currentUsersCredentials = FirebaseUserCredentials.getCurrentUserCredentails()
-        val blankImageUrl =
-            "https://cdn.pixabay.com/photo/2016/04/22/04/57/graduation-1345143_1280.png"
-        val photoUrl = currentUsersCredentials?.photoUrl
-        Log.d("Photo", "$photoUrl")
+        val photoUrl = currentUsersCredentials?.photoUrl?.toString()
         val isEmailVerified = currentUsersCredentials?.isEmailVerified
-        val finalPhoto = photoUrl ?: blankImageUrl
 
         Spacer(Modifier.height(20.dp))
 
@@ -235,10 +231,11 @@ fun AccountInformationContainer(context: Context) {
         ) {
             // Profile image
             AsyncImage(
-                model = finalPhoto,
+                model = photoUrl,
                 contentDescription = "Profile Image",
                 contentScale = ContentScale.Crop,
                 filterQuality = FilterQuality.High,
+                error = painterResource(R.drawable.no_profile),
                 modifier = Modifier
                     .size(150.dp)
                     .clip(CircleShape)
@@ -372,7 +369,7 @@ fun ProfileSettingsUI() {
                 .clickable {
                     Log.d("AccountCenterActivity", "Account Center Button Clicked")
                     when (item.function.lowercase()) {
-                        "statistics" -> NavigationUtils.navigate(context, "statistics")
+                        "analysis" -> NavigationUtils.navigate(context, "analysis")
                         "logout" -> EmailAuthUtils.signOut(context)
                         "about" -> NavigationUtils.navigate(context, "about")
                         else -> ""
@@ -422,8 +419,8 @@ fun getProfileInformation(): List<ProfileInformation> {
 // function to populate the other settings
 fun getSettingItems(): List<UserProfileSettings> {
     return listOf(
-        UserProfileSettings("Statistics", "statistics"),
-        UserProfileSettings("Log Out", "logout"),
-        UserProfileSettings("About Developer", "about")
+        UserProfileSettings("Analysis ", "analysis"),
+        UserProfileSettings("About Developer", "about"),
+        UserProfileSettings("Log Out", "logout")
     )
 }

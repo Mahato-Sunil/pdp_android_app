@@ -10,4 +10,6 @@
     <string name="title_activity_account_registration">AccountRegistrationActivity</string>
     <string name="title_activity_statistics">StatisticsActivity</string>
     <string name="title_activity_about">AboutActivity</string>
+    <string name="title_activity_disease_analysis">DiseaseAnalysis</string>
+    <string name="title_activity_prediction_test">PredictionTestActivity</string>
 </resources>

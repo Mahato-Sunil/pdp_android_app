@@ -62,9 +62,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
 import com.officialsunil.pdpapplication.R
-import com.officialsunil.pdpapplication.utils.EmailAuthUtils
-import com.officialsunil.pdpapplication.utils.EmailAuthUtils.checkCredentials
-import com.officialsunil.pdpapplication.utils.GoogleAuthUtils
+import com.officialsunil.pdpapplication.utils.firebase.EmailAuthUtils
+import com.officialsunil.pdpapplication.utils.firebase.EmailAuthUtils.checkCredentials
+import com.officialsunil.pdpapplication.utils.firebase.GoogleAuthUtils
 import com.officialsunil.pdpapplication.utils.NavigationUtils
 import com.officialsunil.pdpapplication.utils.RegistrationCredentials
 import com.officialsunil.pdpapplication.viewui.ui.theme.PDPApplicationTheme

@@ -1,18 +1,13 @@
 package com.officialsunil.pdpapplication.viewui
 
-import android.animation.AnimatorSet
-import android.animation.ObjectAnimator
 import android.app.Activity
 import android.content.Context
 import android.os.Bundle
 import android.util.Log
-import android.view.View
-import android.view.animation.OvershootInterpolator
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -62,55 +57,30 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.animation.doOnEnd
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import com.google.firebase.auth.FirebaseAuth
 import com.officialsunil.pdpapplication.R
 import com.officialsunil.pdpapplication.ui.theme.PDPApplicationTheme
-import com.officialsunil.pdpapplication.utils.EmailAuthUtils
-import com.officialsunil.pdpapplication.utils.GoogleAuthUtils
 import com.officialsunil.pdpapplication.utils.NavigationUtils
-import com.officialsunil.pdpapplication.utils.PdpModelController
+import com.officialsunil.pdpapplication.utils.SplashScreenUtils
+import com.officialsunil.pdpapplication.utils.firebase.EmailAuthUtils
+import com.officialsunil.pdpapplication.utils.firebase.GoogleAuthUtils
 
 class MainActivity : ComponentActivity() {
     // give reference to the view model
-    private val pdpModelController by viewModels<PdpModelController>()
-
     override fun onCreate(savedInstanceState: Bundle?) {
         // Check if splash should be skipped
         val skipSplash = intent.getBooleanExtra("SKIP_SPLASH", false)
-
         super.onCreate(savedInstanceState)
-        if (!skipSplash) {
-            installSplashScreen().apply {
-                setKeepOnScreenCondition {
-                    !pdpModelController.isModelReady.value
-                }
+        if (!skipSplash) SplashScreenUtils.initializeSplashScreen(
+            activity = this, onComplete = { showMainUIContent() })
+        else showMainUIContent()
+    }
 
-                setOnExitAnimationListener { screen ->
-                    val zoomX = ObjectAnimator.ofFloat(screen.iconView, View.SCALE_X, 1f, 0.0f)
-                    val zoomY = ObjectAnimator.ofFloat(screen.iconView, View.SCALE_Y, 1f, 0.0f)
-
-                    zoomX.interpolator = OvershootInterpolator()
-                    zoomY.interpolator = OvershootInterpolator()
-
-                    zoomX.duration = 500L
-                    zoomY.duration = 500L
-
-                    val animatorSet = AnimatorSet()
-                    animatorSet.playTogether(zoomX, zoomY)
-
-                    animatorSet.doOnEnd { screen.remove() }
-                    animatorSet.start() // Start the animations
-                }
-
-            }
-        }
-
+    // function to show the main ui content
+    private fun showMainUIContent() {
         setContent {
             PDPApplicationTheme {
-
                 if (isUserLoggedIn()) {
                     NavigationUtils.navigate(this, "home", true)
                 } else {
@@ -131,7 +101,6 @@ class MainActivity : ComponentActivity() {
     // backend logics
     private fun initEmailPasswordSignin(email: String, password: String) {
         EmailAuthUtils.loginWithEmail(
-            context = this,
             email = email,
             password = password,
             onSuccess = { user ->
@@ -143,7 +112,6 @@ class MainActivity : ComponentActivity() {
                 Log.e("Auth", "Failed to login", exception)
             })
     }
-
 
     private val googleSignInLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -167,315 +135,318 @@ class MainActivity : ComponentActivity() {
         val user = auth.currentUser // it was auth.getCurrentUser() in older versions
         return user != null
     }
-}
 
-@Composable
-fun InitMainActivityUI(
-    context: Context,
-    activity: Activity,
-    initGoogleLogin: () -> Unit,
-    initEmailPasswordSignin: (String, String) -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .background(color = colorResource(R.color.light_background))
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+    @Composable
+    fun InitMainActivityUI(
+        context: Context,
+        activity: Activity,
+        initGoogleLogin: () -> Unit,
+        initEmailPasswordSignin: (String, String) -> Unit,
     ) {
-        Layout(context, activity, initGoogleLogin, initEmailPasswordSignin)
+        Column(
+            modifier = Modifier
+                .background(color = colorResource(R.color.light_background))
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+        ) {
+            Layout(context, activity, initGoogleLogin, initEmailPasswordSignin)
+        }
     }
-}
 
-@Composable
-fun Layout(
-    context: Context,
-    activity: Activity,
-    initGoogleLogin: () -> Unit,
-    initEmailPasswordSignin: (String, String) -> Unit
-) {
-    Column {
-        HeadingUI()
-        MainContainer(
-            context,
-            activity,
-            initGoogleLogin,
-            initEmailPasswordSignin,
-        )
-    }
-}
-
-@Composable
-fun HeadingUI() {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(120.dp)
+    @Composable
+    fun Layout(
+        context: Context,
+        activity: Activity,
+        initGoogleLogin: () -> Unit,
+        initEmailPasswordSignin: (String, String) -> Unit
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.pdp_logo_text),
-            contentDescription = "Potato Disease Prediction Logo ",
-            modifier = Modifier.fillMaxSize()
-        )
-
+        Column {
+            HeadingUI()
+            MainContainer(
+                context,
+                activity,
+                initGoogleLogin,
+                initEmailPasswordSignin,
+            )
+        }
     }
-}
 
-@Composable
-fun MainContainer(
-    context: Context,
-    activity: Activity,
-    initGoogleLogin: () -> Unit,
-    initEmailPasswordSignin: (String, String) -> Unit,
-) {
-    var emailInpt by remember { mutableStateOf("") }
-    var passwordInpt by remember { mutableStateOf("") }
-    var isChanged by remember { mutableStateOf(false) }
-    var passwordVisible by remember { mutableStateOf(false) }
+    @Composable
+    fun HeadingUI() {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp)
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.pdp_logo_text),
+                contentDescription = "Potato Disease Prediction Logo ",
+                modifier = Modifier.fillMaxSize()
+            )
 
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .padding(10.dp)
-            .fillMaxSize()
+        }
+    }
+
+    @Composable
+    fun MainContainer(
+        context: Context,
+        activity: Activity,
+        initGoogleLogin: () -> Unit,
+        initEmailPasswordSignin: (String, String) -> Unit,
     ) {
-        Spacer(Modifier.height(20.dp))
+        var emailInpt by remember { mutableStateOf("") }
+        var passwordInpt by remember { mutableStateOf("") }
+        var isChanged by remember { mutableStateOf(false) }
+        var passwordVisible by remember { mutableStateOf(false) }
 
-        Text(
-            text = "WELCOME ", style = TextStyle(
-                fontSize = 36.sp,
-                lineHeight = 16.sp,
-                fontWeight = FontWeight(800),
-                color = colorResource(R.color.font_color),
-                textAlign = TextAlign.Center
-            ), letterSpacing = 7.5.sp, modifier = Modifier.fillMaxWidth()
-        )
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .padding(10.dp)
+                .fillMaxSize()
+        ) {
+            Spacer(Modifier.height(20.dp))
 
-        Spacer(modifier = Modifier.height(50.dp))
+            Text(
+                text = "WELCOME ", style = TextStyle(
+                    fontSize = 36.sp,
+                    lineHeight = 16.sp,
+                    fontWeight = FontWeight(800),
+                    color = colorResource(R.color.font_color),
+                    textAlign = TextAlign.Center
+                ), letterSpacing = 7.5.sp, modifier = Modifier.fillMaxWidth()
+            )
 
-        // custom email and password login
-        OutlinedTextField(
-            value = emailInpt, onValueChange = {
-                emailInpt = it
-                isChanged = true
-            }, modifier = Modifier.fillMaxWidth(.95f), singleLine = true, textStyle = TextStyle(
-                fontSize = 14.sp, fontWeight = FontWeight.Normal, letterSpacing = 1.2.sp
-            ), placeholder = {
-                Text(
-                    text = "Email",
-                    color = Color.Gray,
-                )
-            }, trailingIcon = {
-                if (isChanged) IconButton(
-                    onClick = { emailInpt = "" }) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "close icon",
+            Spacer(modifier = Modifier.height(50.dp))
+
+            // custom email and password login
+            OutlinedTextField(
+                value = emailInpt, onValueChange = {
+                    emailInpt = it
+                    isChanged = true
+                }, modifier = Modifier.fillMaxWidth(.95f), singleLine = true, textStyle = TextStyle(
+                    fontSize = 14.sp, fontWeight = FontWeight.Normal, letterSpacing = 1.2.sp
+                ), placeholder = {
+                    Text(
+                        text = "Email",
+                        color = Color.Gray,
                     )
-                }
-            }, shape = RoundedCornerShape(20.dp), keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Email, imeAction = ImeAction.Next
-            )
-        )
-
-        Spacer(Modifier.height(10.dp))
-
-        OutlinedTextField(
-            value = passwordInpt,
-            onValueChange = {
-                passwordInpt = it
-                isChanged = true
-            },
-            modifier = Modifier.fillMaxWidth(.95f),
-            singleLine = true,
-            textStyle = TextStyle(
-                fontSize = 14.sp, fontWeight = FontWeight.Normal, letterSpacing = 1.2.sp
-            ),
-            placeholder = {
-                Text(
-                    text = "Password",
-                    color = Color.Gray,
-                )
-            },
-            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-            trailingIcon = {
-                if (isChanged) {
-                    val icon =
-                        if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
-                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(imageVector = icon, contentDescription = "Toggle Password Visibility")
+                }, trailingIcon = {
+                    if (isChanged) IconButton(
+                        onClick = { emailInpt = "" }) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "close icon",
+                        )
                     }
-                }
-            },
-            shape = RoundedCornerShape(20.dp),
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Password, imeAction = ImeAction.Next
-            )
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Button(
-            onClick = {
-                initEmailPasswordSignin(emailInpt.toString(), passwordInpt.toString())
-            },
-            colors = ButtonColors(
-                containerColor = Color(99, 206, 255, 255),
-                contentColor = Color.White,
-                disabledContainerColor = Color(0xFFD8D8D8),
-                disabledContentColor = Color(0xFF575757)
-            ),
-            enabled = !(emailInpt.isEmpty() || passwordInpt.isEmpty()),
-            shape = RoundedCornerShape(20.dp),
-            modifier = Modifier
-                .padding(8.dp)
-                .border(
-                    width = 1.dp,
-                    color = Color(0xFF000000),
-                    shape = RoundedCornerShape(size = 20.dp)
+                }, shape = RoundedCornerShape(20.dp), keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email, imeAction = ImeAction.Next
                 )
-                .width(296.dp)
-                .height(45.dp)
-                .align(Alignment.CenterHorizontally)
-        ) {
-            Text(
+            )
 
-                text = "Sign in",
-                style = TextStyle(
-                    fontSize = 14.sp, fontWeight = FontWeight(700), letterSpacing = 1.2.sp
+            Spacer(Modifier.height(10.dp))
+
+            OutlinedTextField(
+                value = passwordInpt,
+                onValueChange = {
+                    passwordInpt = it
+                    isChanged = true
+                },
+                modifier = Modifier.fillMaxWidth(.95f),
+                singleLine = true,
+                textStyle = TextStyle(
+                    fontSize = 14.sp, fontWeight = FontWeight.Normal, letterSpacing = 1.2.sp
                 ),
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .width(123.50195.dp)
-                    .align(alignment = Alignment.CenterVertically)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-        Text(
-            text = "Create New Account",
-            style = TextStyle(
-                fontSize = 16.sp, fontWeight = FontWeight.Normal, letterSpacing = 1.2.sp
-            ),
-            textDecoration = TextDecoration.Underline,
-            color = Color.Blue,
-            modifier = Modifier.clickable {
-                EmailAuthUtils.navigateToRegistrationActivity(context, activity)
-            })
-
-        Spacer(modifier = Modifier.height(80.dp))
-
-        Button(
-            onClick = {
-                initGoogleLogin()
-            },
-            colors = ButtonColors(
-                containerColor = colorResource(id = R.color.light_background),
-                contentColor = colorResource(id = R.color.font_color),
-                disabledContainerColor = Color(0xFFD8D8D8),
-                disabledContentColor = Color(0xFF575757)
-            ),
-            enabled = true,
-            shape = RoundedCornerShape(8.dp),
-            modifier = Modifier
-                .padding(8.dp)
-                .border(
-                    width = 1.dp,
-                    color = Color(0xFF000000),
-                    shape = RoundedCornerShape(size = 20.dp)
+                placeholder = {
+                    Text(
+                        text = "Password",
+                        color = Color.Gray,
+                    )
+                },
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    if (isChanged) {
+                        val icon =
+                            if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = "Toggle Password Visibility"
+                            )
+                        }
+                    }
+                },
+                shape = RoundedCornerShape(20.dp),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password, imeAction = ImeAction.Next
                 )
-                .width(296.dp)
-                .height(45.dp)
-                .align(Alignment.CenterHorizontally)
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.google_icon),
-                contentDescription = "Google Icon",
-                contentScale = ContentScale.None,
-                modifier = Modifier
-                    .padding(1.dp)
-                    .width(23.62646.dp)
-                    .height(22.51563.dp)
             )
 
-            // vertical spacer
-            Spacer(modifier = Modifier.width(21.dp))
-            Text(
+            Spacer(modifier = Modifier.height(20.dp))
 
-                text = "Sign in with Google",
+            Button(
+                onClick = {
+                    initEmailPasswordSignin(emailInpt.toString(), passwordInpt.toString())
+                },
+                colors = ButtonColors(
+                    containerColor = Color(99, 206, 255, 255),
+                    contentColor = Color.White,
+                    disabledContainerColor = Color(0xFFD8D8D8),
+                    disabledContentColor = Color(0xFF575757)
+                ),
+                enabled = !(emailInpt.isEmpty() || passwordInpt.isEmpty()),
+                shape = RoundedCornerShape(20.dp),
+                modifier = Modifier
+                    .padding(8.dp)
+                    .border(
+                        width = 1.dp,
+                        color = Color(0xFF000000),
+                        shape = RoundedCornerShape(size = 20.dp)
+                    )
+                    .width(296.dp)
+                    .height(45.dp)
+                    .align(Alignment.CenterHorizontally)
+            ) {
+                Text(
+
+                    text = "Sign in",
+                    style = TextStyle(
+                        fontSize = 14.sp, fontWeight = FontWeight(700), letterSpacing = 1.2.sp
+                    ),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .width(123.50195.dp)
+                        .align(alignment = Alignment.CenterVertically)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+            Text(
+                text = "Create New Account",
                 style = TextStyle(
+                    fontSize = 16.sp, fontWeight = FontWeight.Normal, letterSpacing = 1.2.sp
+                ),
+                textDecoration = TextDecoration.Underline,
+                color = Color.Blue,
+                modifier = Modifier.clickable {
+                    EmailAuthUtils.navigateToRegistrationActivity(context, activity)
+                })
+
+            Spacer(modifier = Modifier.height(80.dp))
+
+            Button(
+                onClick = {
+                    initGoogleLogin()
+                },
+                colors = ButtonColors(
+                    containerColor = colorResource(id = R.color.light_background),
+                    contentColor = colorResource(id = R.color.font_color),
+                    disabledContainerColor = Color(0xFFD8D8D8),
+                    disabledContentColor = Color(0xFF575757)
+                ),
+                enabled = true,
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier
+                    .padding(8.dp)
+                    .border(
+                        width = 1.dp,
+                        color = Color(0xFF000000),
+                        shape = RoundedCornerShape(size = 20.dp)
+                    )
+                    .width(296.dp)
+                    .height(45.dp)
+                    .align(Alignment.CenterHorizontally)
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.google_icon),
+                    contentDescription = "Google Icon",
+                    contentScale = ContentScale.None,
+                    modifier = Modifier
+                        .padding(1.dp)
+                        .width(23.62646.dp)
+                        .height(22.51563.dp)
+                )
+
+                // vertical spacer
+                Spacer(modifier = Modifier.width(21.dp))
+                Text(
+
+                    text = "Sign in with Google",
+                    style = TextStyle(
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight(700),
+                        color = colorResource(id = R.color.font_color),
+                    ),
+                    modifier = Modifier
+                        .width(123.50195.dp)
+                        .align(alignment = Alignment.CenterVertically)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(25.dp))
+            Text(
+                text = "--------------------  OR  --------------------", style = TextStyle(
                     fontSize = 12.sp,
-                    fontWeight = FontWeight(700),
-                    color = colorResource(id = R.color.font_color),
-                ),
-                modifier = Modifier
-                    .width(123.50195.dp)
-                    .align(alignment = Alignment.CenterVertically)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(25.dp))
-        Text(
-            text = "--------------------  OR  --------------------", style = TextStyle(
-                fontSize = 12.sp,
-                lineHeight = 16.sp,
-                fontWeight = FontWeight(800),
-                color = Color.Gray,
-                textAlign = TextAlign.Center
-            )
-        )
-
-
-        Spacer(modifier = Modifier.height(25.dp))
-        Button(
-            onClick = {
-                NavigationUtils.navigate(context, "signinRationale", true)
-            },
-            colors = ButtonColors(
-                containerColor = colorResource(id = R.color.light_background),
-                contentColor = colorResource(id = R.color.font_color),
-                disabledContainerColor = Color(0xFFD8D8D8),
-                disabledContentColor = Color(0xFF575757)
-            ),
-            enabled = true,
-            shape = RoundedCornerShape(8.dp),
-            modifier = Modifier
-                .padding(8.dp)
-                .border(
-                    width = 1.dp,
-                    color = Color(0xFF000000),
-                    shape = RoundedCornerShape(size = 20.dp)
+                    lineHeight = 16.sp,
+                    fontWeight = FontWeight(800),
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center
                 )
-                .width(296.dp)
-                .height(45.dp)
-                .align(Alignment.CenterHorizontally)
-        ) {
-            Image(
-                imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                contentDescription = "Google Icon",
-                contentScale = ContentScale.None,
-                modifier = Modifier
-                    .padding(1.dp)
-                    .width(23.62646.dp)
-                    .height(22.51563.dp)
-
             )
 
-            // vertical spacer
-            Spacer(modifier = Modifier.width(21.dp))
-            Text(
-                text = "Skip For Now",
-                style = TextStyle(
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight(700),
-                    color = colorResource(id = R.color.font_color),
+
+            Spacer(modifier = Modifier.height(25.dp))
+            Button(
+                onClick = {
+                    NavigationUtils.navigate(context, "signinRationale", true)
+                },
+                colors = ButtonColors(
+                    containerColor = colorResource(id = R.color.light_background),
+                    contentColor = colorResource(id = R.color.font_color),
+                    disabledContainerColor = Color(0xFFD8D8D8),
+                    disabledContentColor = Color(0xFF575757)
                 ),
+                enabled = true,
+                shape = RoundedCornerShape(8.dp),
                 modifier = Modifier
-                    .width(123.50195.dp)
-                    .align(alignment = Alignment.CenterVertically)
-            )
-        }
+                    .padding(8.dp)
+                    .border(
+                        width = 1.dp,
+                        color = Color(0xFF000000),
+                        shape = RoundedCornerShape(size = 20.dp)
+                    )
+                    .width(296.dp)
+                    .height(45.dp)
+                    .align(Alignment.CenterHorizontally)
+            ) {
+                Image(
+                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                    contentDescription = "Google Icon",
+                    contentScale = ContentScale.None,
+                    modifier = Modifier
+                        .padding(1.dp)
+                        .width(23.62646.dp)
+                        .height(22.51563.dp)
 
+                )
+
+                // vertical spacer
+                Spacer(modifier = Modifier.width(21.dp))
+                Text(
+                    text = "Skip For Now",
+                    style = TextStyle(
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight(700),
+                        color = colorResource(id = R.color.font_color),
+                    ),
+                    modifier = Modifier
+                        .width(123.50195.dp)
+                        .align(alignment = Alignment.CenterVertically)
+                )
+            }
+
+        }
     }
 }

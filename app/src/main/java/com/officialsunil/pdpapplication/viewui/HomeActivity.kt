@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -26,7 +27,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.CameraEnhance
 import androidx.compose.material.icons.filled.House
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.officialsunil.pdpapplication.R
 import com.officialsunil.pdpapplication.ui.theme.PDPApplicationTheme
+import com.officialsunil.pdpapplication.utils.firebase.FirebaseUserCredentials
 import com.officialsunil.pdpapplication.utils.NavigationUtils
 
 class HomeActivity : ComponentActivity() {
@@ -64,14 +65,16 @@ class HomeActivity : ComponentActivity() {
 }
 
 //  activity layout
+@Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun InitHomeActivityUI() {
-    Scaffold(topBar = { HomeHeadingUI() },
+    Scaffold(
+        topBar = { HomeHeadingUI() },
         bottomBar = {
-        HomeButtonContainer()
-    }) { innerPadding ->
+            HomeButtonContainer()
+        }
+    ) { innerPadding ->
         Column(
-//            horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
@@ -84,40 +87,43 @@ fun InitHomeActivityUI() {
 
 }
 
-
 /* ========================================================================
     UI Layout and Composable functions
    ========================================================================
  */
 @Composable
 fun HomeHeadingUI() {
-    Column(
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
+    // get the current users name
+    val currentUser = FirebaseUserCredentials.getCurrentUserCredentails()
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Start,
         modifier = Modifier
-            .fillMaxWidth()
             .systemBarsPadding()
-//            .background(Color.Blue)
-//            .background(colorResource(R.color.light_background))
+            .fillMaxWidth()
+            .height(60.dp)
+            .background(Color.LightGray)
+
     ) {
-        Text(
-            text = "Potato Disease Prediction", style = TextStyle(
-                color = colorResource(R.color.font_color),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = TextUnit(1.5f, TextUnitType.Sp)
-            ), modifier = Modifier
-                .fillMaxWidth()
-                .height(40.dp)
-                .padding(8.dp)
+        Image(
+            imageVector = Icons.Default.Person,
+            contentDescription = "Profile Icon",
+            modifier = Modifier
+                .fillMaxHeight()
+                .padding(start = 16.dp, end = 16.dp)
         )
 
-        HorizontalDivider(
-            thickness = 1.dp,
+        Text(
+            text = currentUser?.name ?: "Anonymous",
+            color = Color.Black,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(5.dp),
-            color = Color.LightGray
+                .padding(start = 16.dp),
+            style = TextStyle(
+                letterSpacing = 2.sp,
+            )
         )
     }
 }
@@ -170,10 +176,7 @@ fun HomeContainer() {
                 .padding(5.dp)
                 .fillMaxWidth()
                 .background(colorResource(R.color.light_card_background))
-                .clickable {
-                    NavigationUtils.navigate(localContext, "prediction")
-
-                }) {
+        ) {
             Image(
                 painter = painterResource(R.drawable.pdp_logo),
                 contentDescription = "Recent History Image",
@@ -211,7 +214,8 @@ fun HomeContainer() {
             }
 
             IconButton(
-                onClick = { /* Handle the button click */ },
+                onClick = {
+                    NavigationUtils.navigate(localContext, "prediction") /* Handle the button click */ },
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
@@ -283,10 +287,10 @@ fun HomeButtonContainer() {
     }
 }
 
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun PreviewHomeActivityUI() {
-    PDPApplicationTheme {
-        InitHomeActivityUI()
-    }
-}
+//@Preview(showBackground = true, showSystemUi = true)
+//@Composable
+//fun PreviewHomeActivityUI() {
+//    PDPApplicationTheme {
+//        InitHomeActivityUI()
+//    }
+//}

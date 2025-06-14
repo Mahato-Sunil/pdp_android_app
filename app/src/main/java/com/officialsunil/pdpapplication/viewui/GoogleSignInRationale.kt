@@ -43,7 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
 import com.officialsunil.pdpapplication.R
-import com.officialsunil.pdpapplication.utils.GoogleAuthUtils
+import com.officialsunil.pdpapplication.utils.firebase.GoogleAuthUtils
 import com.officialsunil.pdpapplication.utils.SigninigRationale
 import com.officialsunil.pdpapplication.viewui.ui.theme.PDPApplicationTheme
 

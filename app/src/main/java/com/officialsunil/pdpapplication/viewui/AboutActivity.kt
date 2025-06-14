@@ -3,6 +3,7 @@ package com.officialsunil.pdpapplication.viewui
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -140,8 +141,9 @@ fun AboutHeaderUI() {
 @Composable
 fun AboutContainerUI(navigateTo: (String) -> Unit) {
     val photoUrl =
-        "https://scontent.fktm3-1.fna.fbcdn.net/v/t51.75761-15/483312717_18061242734057531_2246113698672980003_n.jpg?stp=dst-jpg_tt6&_nc_cat=102&ccb=1-7&_nc_sid=127cfc&_nc_ohc=I-7HXmbLWbkQ7kNvwFZe5e5&_nc_oc=Adkc5izW1Z8zc1kEFxPS6tSZfF78H_KaiMVTxyPdjSr0XXsMXELd5JN08jWUmjFFZIKR_0rLvn1RUAqTzYuLkQYE&_nc_zt=23&_nc_ht=scontent.fktm3-1.fna&_nc_gid=uAugRPC9A-L-GB1SI4JayQ&oh=00_AfH1-CzaW0QTNAE7zcJpRghyU15HdARwPVwWtPDbTpfVvg&oe=68056922"
+        "https://mahatosunil.com.np/profile.png"
 
+    Log.d("User Photo", photoUrl)
     Column(
         verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -157,6 +159,7 @@ fun AboutContainerUI(navigateTo: (String) -> Unit) {
                 contentDescription = "Profile Image",
                 contentScale = ContentScale.Crop,
                 filterQuality = FilterQuality.High,
+                error = painterResource(R.drawable.image),
                 modifier = Modifier
                     .size(200.dp)
                     .clip(CircleShape)

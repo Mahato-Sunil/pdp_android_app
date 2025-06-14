@@ -1,3 +1,8 @@
+/*
+Handles the camera view model
+function for taking the photo and  clearing the bitmaps
+
+ */
 package com.officialsunil.pdpapplication.utils
 
 import android.graphics.Bitmap
