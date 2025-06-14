@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -37,6 +38,8 @@ import com.officialsunil.pdpapplication.utils.PredictionData
 import com.officialsunil.pdpapplication.utils.firebase.FirebaseFirestoreUtils
 import com.officialsunil.pdpapplication.utils.firebase.FirebaseUserCredentials
 import com.officialsunil.pdpapplication.utils.firebase.ImageToBase64
+import java.util.Base64
+import java.util.Random
 
 class PredictionActivity : ComponentActivity() {
     var isAlreadyUploaded = mutableStateOf(false)
@@ -264,9 +267,17 @@ class PredictionActivity : ComponentActivity() {
         val timestamp = Timestamp.now()
         val imageBase64 = ImageToBase64.convertImageToBase64Format(imagePath = predictedImgPath)
 
+        // randomly generate the unique disease id
+        val byteLength = 10
+        val byteArray = ByteArray(byteLength)
+        Random().nextBytes(byteArray)
+        val randomDiseaseId = Base64.getUrlEncoder().withoutPadding().encodeToString(byteArray)
+
+        Log.d("Disease ID", "$randomDiseaseId")
+        
         val predictionData = PredictionData(
             userId = userId,
-            diseaseId = "${predictedDiseaseName}_${userId}",
+            diseaseId = randomDiseaseId,
             imageBase64String = imageBase64.toString(),
             predictedName = predictedDiseaseName,
             accuracy = predictedDiseaseAccuracy,

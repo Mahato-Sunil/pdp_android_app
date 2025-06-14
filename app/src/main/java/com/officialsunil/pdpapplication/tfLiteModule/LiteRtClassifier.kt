@@ -29,7 +29,7 @@ class LiteRtClassifier(
     private val useGpu: Boolean = false
 ) {
     // declare the interpreter and gpu delegate and other informations
-    private val modelName = "pdp_model.tflite"
+    private val modelName = "best_model.tflite"
     private val numClasses = 4
     private var interpreter: Interpreter? = null
     private var gpuDelegate: GpuDelegate? = null
