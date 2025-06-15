@@ -214,7 +214,7 @@ fun StatsContainer(diseaseIdRef: String, modifier: Modifier) {
          */
 //        val severityLevel = predictionAccuracy?.toFloat() ?: 0f
 
-        val severityLevel = 56f
+        val severityLevel = .56f
 
         Box(
             contentAlignment = Alignment.Center,
