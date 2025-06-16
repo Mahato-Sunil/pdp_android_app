@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -61,15 +63,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -84,6 +90,7 @@ import com.officialsunil.pdpapplication.utils.NavigationUtils
 import com.officialsunil.pdpapplication.utils.customchart.ChartData
 import com.officialsunil.pdpapplication.utils.customchart.getChartDataForMonth
 import com.officialsunil.pdpapplication.viewui.ui.theme.PDPApplicationTheme
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.Month
 import java.time.Year
@@ -540,56 +547,152 @@ fun Barchart(year: String, month: String, disease: String) {
 
     // Display the graph using predictionData
     if (predictionData.isNotEmpty()) {
+
         // Animation progress
-        val animatedProgress by animateFloatAsState(
-            targetValue = 1f,
-            animationSpec = tween(durationMillis = 1000, easing = LinearOutSlowInEasing)
-        ) // draw the bar graph using the canvas
-        Canvas(
-            contentDescription = "Barchart",
+        val animatedProgress = remember { Animatable(0f) }
+        LaunchedEffect(Unit) {
+            delay(100)
+            animatedProgress.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 1000, easing = LinearOutSlowInEasing)
+            )
+        }
+
+        // draw the bar graph using the canvas wraped inside a box
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(325.dp)
                 .padding(16.dp)
+                .background(MaterialTheme.colorScheme.surface)
         ) {
-            val barSpacing = 20.dp.toPx()
-            val maxValue = predictionData.maxOfOrNull { it.predictionCount[disease] ?: 0 } ?: 1
-            val barWidth =
-                (size.width - (predictionData.size + 1) * barSpacing) / predictionData.size
-            val scaleY = size.height / (maxValue * 1.2f)  // extra space for labels
+            Canvas(
+                contentDescription = "Bar chart", modifier = Modifier.fillMaxSize()
+            ) {
+                val barSpacing = 20.dp.toPx()
+                val maxValue = predictionData.maxOfOrNull { it.predictionCount[disease] ?: 0 } ?: 1
+                val barWidth =
+                    (size.width - (predictionData.size + 1) * barSpacing) / predictionData.size
+                val scaleY = size.height / (maxValue * 1.5f)  // extra space for labels
 
-            predictionData.forEachIndexed { index, data ->
-                val count = data.predictionCount[disease] ?: 0
-                val barHeight = count * scaleY * animatedProgress
-                val x = barSpacing + index * (barWidth + barSpacing)
-                val y = size.height - barHeight
-                drawRect(
-                    color = Color(0xFF4CAF50),
-                    topLeft = Offset(x, y),
-                    size = Size(barWidth, barHeight),
-                    style = Fill
+                // Draw y-axis
+                drawLine(
+                    color = Color.Gray,
+                    start = Offset(50f, 0f),
+                    end = Offset(50f, size.height - 50f),
+                    strokeWidth = 2f
                 )
 
-//                // draw tooltip text
-//                drawContext.canvas.nativeCanvas.apply {
-//                    drawText(
-//                        drawText(
-//                            count.toString(),
-//                            x + barWidth / 4,
-//                            y - 10,
-//                            android.graphics.Paint().apply {
-//                                color = android.graphics.Color.BLACK
-//                                textSize = 32f
-//                                textAlign = android.graphics.Paint.Align.LEFT
-//                            }
-//                        )
-//                }
+                // Draw X-axis
+                drawLine(
+                    color = Color.Gray,
+                    start = Offset(50f, size.height - 50f),
+                    end = Offset(size.width, size.height - 50f),
+                    strokeWidth = 2f
+                )
+
+                // Draw Y-axis labels
+                val yStep = maxValue / 5
+                for (i in 0..5) {
+                    val value = i * yStep
+                    val yPos = size.height - 50f - (value * scaleY * animatedProgress.value)
+
+                    // Draw tick mark
+                    drawLine(
+                        color = Color.Gray,
+                        start = Offset(45f, yPos),
+                        end = Offset(50f, yPos),
+                        strokeWidth = 2f
+                    )
+
+                    // Draw label
+                    drawContext.canvas.nativeCanvas.apply {
+                        drawText(
+                            value.toString(), 30f, yPos + 10f, android.graphics.Paint().apply {
+                                color = android.graphics.Color.BLACK
+                                textSize = 24f
+                                textAlign = android.graphics.Paint.Align.RIGHT
+                            })
+                    }
+                }
+
+                // draw bars and x-axis labels
+                predictionData.forEachIndexed { index, data ->
+                    val count = data.predictionCount[disease] ?: 0
+                    val barHeight = count * scaleY * animatedProgress.value
+                    val x = 50f + barSpacing + index * (barWidth + barSpacing)
+                    val y = size.height - 50f - barHeight
+
+                    // draw bar
+                    drawRect(
+                        color = Color(0xFF3D09FF),
+                        topLeft = Offset(x, y),
+                        size = Size(barWidth, barHeight),
+                        style = Fill
+                    )
+
+                    // Draw value label on top of bar
+                    drawContext.canvas.nativeCanvas.apply {
+                        drawText(
+                            count.toString(),
+                            x + barWidth / 2,
+                            y - 10f,
+                            android.graphics.Paint().apply {
+                                color = android.graphics.Color.BLACK
+                                textSize = 24f
+                                textAlign = android.graphics.Paint.Align.CENTER
+                            })
+                    }
+
+                    // Draw X-axis label (assuming data has a label property)
+                    drawContext.canvas.nativeCanvas.apply {
+                        drawText(
+                            data.label,  // Replace with your actual label property
+                            x + barWidth / 2, size.height - 20f, android.graphics.Paint().apply {
+                                color = android.graphics.Color.BLACK
+                                textSize = 24f
+                                textAlign = android.graphics.Paint.Align.CENTER
+                            })
+                    }
+                }
             }
 
+            // Add chart title
+            Text(
+                text = "Monthly Summary of $disease", style = TextStyle(
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                ), modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 8.dp)
+            )
+
+            // Add Y-axis label
+            Box(
+                modifier = Modifier
+                    .rotate(-90f)
+                    .align(Alignment.CenterStart)
+                    .offset(x = (-40).dp)
+            ) {
+                Text(
+                    text = "Number of Predictions", style = TextStyle(
+                        fontSize = 16.sp, fontWeight = FontWeight.Bold
+                    ), textAlign = TextAlign.Center
+                )
+            }
+
+            // Add X-axis label
+            Text(
+                text = "Categories",  // Change this to appropriate label
+                style = TextStyle(
+                    fontSize = 16.sp, fontWeight = FontWeight.Bold
+                ), modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 8.dp)
+            )
         }
-    } else {
-        Text("No data found.")
-    }
+    } else Text("No data found.")
 }
 
 @Preview(showBackground = true, showSystemUi = true)
