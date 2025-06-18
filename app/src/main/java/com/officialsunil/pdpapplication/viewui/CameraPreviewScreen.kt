@@ -65,10 +65,11 @@ fun CameraPreview(
     AndroidView(
         factory = {
             PreviewView(it).apply {
+                scaleType = PreviewView.ScaleType.FILL_CENTER
                 this.controller = controller
                 controller.bindToLifecycle(lifecycleOwner)
             }
-        }, modifier = modifier
+        }, modifier = modifier.fillMaxSize()
     )
 }
 
