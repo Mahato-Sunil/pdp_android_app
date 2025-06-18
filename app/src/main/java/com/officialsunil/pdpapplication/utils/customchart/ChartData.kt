@@ -6,15 +6,17 @@ package com.officialsunil.pdpapplication.utils.customchart
 
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
-import com.officialsunil.pdpapplication.utils.PredictionData
 import com.officialsunil.pdpapplication.utils.RetrievePredictionData
 import com.officialsunil.pdpapplication.utils.firebase.FirebaseFirestoreUtils
 import com.officialsunil.pdpapplication.utils.firebase.FirebaseUserCredentials
-import java.time.temporal.WeekFields
-import java.util.Locale
 import java.time.Instant
 import java.time.ZoneId
+import java.time.temporal.WeekFields
+import java.util.Locale
 
+data class PredictionSummary(
+    val label: String, val score: Float
+)
 
 data class ChartData(
     val label: String, val weekLabel: String, val predictionCount: Map<String, Int>
@@ -30,9 +32,7 @@ Steps :
 
 */
 suspend fun getChartDataForMonth(
-    yearFilter: Int,
-    monthFilter: Int,
-    diseaseFileter : String
+    yearFilter: Int, monthFilter: Int, diseaseFileter: String
 ): List<ChartData> {
     val isDataAvailable = mutableStateOf(true)
     val userId = FirebaseUserCredentials.getCurrentUserCredentails()
@@ -51,8 +51,11 @@ suspend fun getChartDataForMonth(
 
     // Step 1: Filter data by month and year
     val filteredPredictions = retrievedData.filter {
-        val date =Instant.ofEpochSecond(it.timestamp.seconds).atZone(ZoneId.systemDefault()).toLocalDate()
-        date.year == yearFilter &&  date.monthValue == monthFilter&& it.predictedName.equals(diseaseFileter, ignoreCase = true)
+        val date =
+            Instant.ofEpochSecond(it.timestamp.seconds).atZone(ZoneId.systemDefault()).toLocalDate()
+        date.year == yearFilter && date.monthValue == monthFilter && it.predictedName.equals(
+            diseaseFileter, ignoreCase = true
+        )
     }
 
     // Step 2: Group by week within the filtered month
@@ -72,4 +75,61 @@ suspend fun getChartDataForMonth(
     }
     Log.d("ChartData", chartDataList.toString())
     return chartDataList.sortedBy { it.weekLabel }
+}
+
+/*
+    funtion to get the total score and disease l
+    label from the data base
+
+    Steps   :
+    1   => get the user credentials
+    2   => get the total predictions
+    3   => count the total predictions for each disease or label
+    4   =>  return the list of prediction summary
+ */
+
+suspend fun getCompletePredictionSummary(): List<PredictionSummary> {
+    val isDataAvailable = mutableStateOf(true)
+    val userId = FirebaseUserCredentials.getCurrentUserCredentails()
+
+    val predictionData: RetrievePredictionData? = FirebaseFirestoreUtils.fetchAllDiseaseInfo(
+        userId = userId?.uid.toString(), onError = {
+            isDataAvailable.value = false
+        })
+
+    if (!isDataAvailable.value) return emptyList()
+    // extract the data
+    val retrievedData = predictionData?.retrievePredictionData ?: emptyList()
+
+    // Group by label and count
+    val total = retrievedData.size.toFloat()
+
+    val groupedCounts = retrievedData.groupingBy { it.predictedName }.eachCount()
+
+    // Convert to percentage and build the summary
+    val summaryList = groupedCounts.map { (label, count) ->
+        val percentage = (count / total) * 100
+        PredictionSummary(
+            label = label, score = percentage.toFloat()
+        )
+    }
+
+    Log.d("ChartData", summaryList.toString())
+    return summaryList
+}
+
+// function to get the analysis result based on the above getCompletePredictionSummary
+suspend fun getStatistics(filter: Int): PredictionSummary {
+    val summaryList = getCompletePredictionSummary()
+    val sortedPrediction =
+        summaryList.filter { it.label.lowercase() != "unknown" }.sortedByDescending { it.score }
+
+    val highestPrediction = when (filter) {
+        0 -> sortedPrediction.getOrNull(0)
+        1 -> sortedPrediction.getOrNull(1)
+        else -> emptyList<PredictionSummary>()
+    }
+
+    Log.d("ChartData", highestPrediction.toString())
+    return highestPrediction as PredictionSummary
 }

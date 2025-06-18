@@ -9,7 +9,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -60,40 +59,35 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Fill
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
 import com.officialsunil.pdpapplication.R
 import com.officialsunil.pdpapplication.utils.NavigationUtils
 import com.officialsunil.pdpapplication.utils.customchart.ChartData
+import com.officialsunil.pdpapplication.utils.customchart.PredictionSummary
 import com.officialsunil.pdpapplication.utils.customchart.getChartDataForMonth
+import com.officialsunil.pdpapplication.utils.customchart.getCompletePredictionSummary
+import com.officialsunil.pdpapplication.utils.customchart.getStatistics
 import com.officialsunil.pdpapplication.viewui.ui.theme.PDPApplicationTheme
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import java.time.Month
-import java.time.Year
 
 class DiseaseAnalysis : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -184,6 +178,12 @@ fun AnalysisContainer(modifier: Modifier) {
 // show the total  prediction summary
 @Composable
 fun SummarySection() {
+    var predictionSummary: List<PredictionSummary> by remember { mutableStateOf(emptyList()) }
+
+    LaunchedEffect(Unit) {
+        predictionSummary = getCompletePredictionSummary()
+    }
+
     Card(
         elevation = CardDefaults.cardElevation(8.dp),
         modifier = Modifier
@@ -218,10 +218,18 @@ fun SummarySection() {
                     .horizontalScroll(state = rememberScrollState())
             ) {
                 // show the circular bar here
-                CircularProgressBar("Healthy", .8f, Color.Green)
-                CircularProgressBar("Early Blight", .6f, Color.Yellow)
-                CircularProgressBar("Late Blight", .7f, Color.Red)
-                CircularProgressBar("Unknown", .4f, Color.Blue)
+
+                predictionSummary.forEach { data ->
+                    // choose the color
+                    val color = when (data.label) {
+                        "Healthy" -> Color.Green
+                        "Late_Blight" -> Color.Red
+                        "Early_Blight" -> Color.Yellow
+                        else -> Color.Blue
+
+                    }
+                    CircularProgressBar(data.label, data.score, color)
+                }
             }
         }
 
@@ -236,6 +244,88 @@ fun SummarySection() {
  */
 @Composable
 fun AnalysisSection() {
+    var highestProbability by remember { mutableStateOf(PredictionSummary("Default", 0f)) }
+    var secondHighestProbability by remember { mutableStateOf(PredictionSummary("Default", 0f)) }
+    LaunchedEffect(Unit) {
+        highestProbability = getStatistics(0)
+        secondHighestProbability = getStatistics(1)
+    }
+
+    /*
+      Now the data is in 'highestProbability' (i.e. the top prediction).
+
+      ✅ Customization Plan:
+      1. For **Main Description** based on the highest label:
+          - "Early_Blight"  =>  "Several Early Blight infections detected."
+          - "Late_Blight"   =>  "Severe Late Blight infection detected!!"
+          - "Healthy"       =>  "Hurray! No signs of severe infections."
+          - "Unknown"       =>  "Condition unknown. Further analysis recommended."
+
+      2. For **Comparison Message** based on the second highest label and score:
+          - Compare `highest.score - second.score`, generate message as:
+              If label is "Early_Blight" or "Late_Blight":
+                  - 70 to 100   => "Severely affected — X% higher than <second.label>"
+                  - 40 to 69    => "Moderately affected — X% higher than <second.label>"
+                  - 0 to 39     => "Mildly affected — X% higher than <second.label>"
+              (No comparison message if label is "Healthy" or "Unknown")
+
+      3. For **Color Code** (used in UI theme, chart, etc):
+          - "Early_Blight" => Amber   (#F59E0B)
+          - "Late_Blight"  => Red     (#EF4444)
+          - "Healthy"      => Green   (#10B981)
+          - "Unknown"      => Gray    (#9CA3AF)
+
+      4. For **Image Resource** (used in UI preview):
+          - "Early_Blight" => R.drawable.early_blight
+          - "Late_Blight"  => R.drawable.late_blight
+          - "Healthy"      => R.drawable.healthy
+          - "Unknown"      => R.drawable.unknown
+  */
+
+    val mainDescription = when (highestProbability.label) {
+        "Early_Blight" -> "Several Early Blight infections detected."
+        "Late_Blight" -> "Severe Late Blight infection detected!!"
+        "Healthy" -> "Hurray! No signs of severe infections."
+        else -> "Condition unknown. Further analysis recommended."
+    }
+
+    val colorCode = when (highestProbability.label) {
+        "Early_Blight" -> 0xFFF59E0B.toInt() // amber
+        "Late_Blight" -> 0xFFEF4444.toInt() // red
+        "Healthy" -> 0xFF10B981.toInt()     // green
+        else -> 0xFF9CA3AF.toInt()          // gray
+    }
+
+
+    val imageRes = when (highestProbability.label) {
+        "Early_Blight" -> R.drawable.permission_rationale
+        "Late_Blight" -> R.drawable.image
+        "Healthy" -> R.drawable.no_profile
+        else -> R.drawable.warning
+    }
+
+    val scoreDiff = highestProbability.score - secondHighestProbability.score
+
+    val comparisonMsg = when (highestProbability.label) {
+        "Early_Blight" -> when (scoreDiff) {
+            in 70f..100f -> "Severely affected — ${scoreDiff.toInt()}% higher than ${secondHighestProbability.label}."
+            in 40f..69f -> "Moderately affected — ${scoreDiff.toInt()}% higher than ${secondHighestProbability.label}."
+            in 0f..39f -> "Mildly affected — ${scoreDiff.toInt()}% higher than ${secondHighestProbability.label}."
+            else -> null
+        }
+
+        "Late_Blight" -> when (scoreDiff) {
+            in 70f..100f -> "Severely affected — ${scoreDiff.toInt()}% higher than ${secondHighestProbability.label}."
+            in 40f..69f -> "Moderately affected — ${scoreDiff.toInt()}% higher than ${secondHighestProbability.label}."
+            in 0f..39f -> "Mildly affected — ${scoreDiff.toInt()}% higher than ${secondHighestProbability.label}."
+            else -> null
+        }
+
+        else -> null
+    }
+
+    Log.d("ChartData", highestProbability.toString())
+
     Card(
         elevation = CardDefaults.cardElevation(8.dp),
         modifier = Modifier
@@ -270,7 +360,7 @@ fun AnalysisSection() {
             ) {
                 //image  part
                 Image(
-                    painter = painterResource(R.drawable.permission_rationale),
+                    painter = painterResource(imageRes),
                     contentDescription = "analysis image",
                     contentScale = ContentScale.Fit,
                 )
@@ -284,18 +374,18 @@ fun AnalysisSection() {
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "Early Blight ", style = TextStyle(
+                        text = highestProbability.label, style = TextStyle(
                             fontSize = 20.sp,
                             lineHeight = 20.sp,
                             fontWeight = FontWeight(500),
-                            color = Color(0xFF000000),
+                            color = Color(colorCode),
                             textAlign = TextAlign.Center,
                             letterSpacing = 0.2.sp,
                         )
                     )
 
                     Text(
-                        text = "Severe Early Blight infection detected.", style = TextStyle(
+                        text = mainDescription, style = TextStyle(
                             fontSize = 14.sp,
                             lineHeight = 20.sp,
                             fontWeight = FontWeight(300),
@@ -306,7 +396,7 @@ fun AnalysisSection() {
                     )
 
                     Text(
-                        text = "Affected: 20% higher than other diseases", style = TextStyle(
+                        text = comparisonMsg.toString(), style = TextStyle(
                             fontSize = 14.sp,
                             lineHeight = 20.sp,
                             fontWeight = FontWeight(300),
@@ -362,7 +452,6 @@ fun FilterPicker() {
     val currentYear = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)
     val currentMonth =
         DateFormatSymbols().months[java.util.Calendar.getInstance().get(java.util.Calendar.MONTH)]
-
     val radioOptions = listOf("Early_Blight", "Healthy", "Late_Blight", "Unknown")
 
     var selectedYear by remember { mutableStateOf(currentYear.toString()) }
@@ -409,8 +498,12 @@ fun FilterPicker() {
             }
         }
     }
-    // pass the required filters to the bar chart
-    Barchart(year = selectedYear, month = selectedMonth, disease = selectedLabel)
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(16.dp)
+    ) {
+        // pass the required filters to the bar chart
+        Barchart(year = selectedYear, month = selectedMonth, disease = selectedLabel)
+    }
 }
 
 // composable function for dropdown selector
@@ -508,7 +601,7 @@ fun CircularProgressBar(
                 .background(Color.White, shape = CircleShape)
         ) {
             CircularProgressIndicator(
-                progress = { progress },
+                progress = { progress / 100f },
                 modifier = Modifier.fillMaxSize(0.85f),
                 color = color,
                 strokeWidth = 10.dp,
@@ -518,7 +611,7 @@ fun CircularProgressBar(
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = String.format("%.2f", progress * 100) + "%", style = TextStyle(
+                    text = String.format("%.2f", progress) + "%", style = TextStyle(
                         fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.DarkGray
                     )
                 )
@@ -534,7 +627,11 @@ fun CircularProgressBar(
 
 // composable function to show the barchart
 @Composable
-fun Barchart(year: String, month: String, disease: String) {
+fun Barchart(
+    year: String, month: String, disease: String
+) {
+    val containerHeight = 350.dp
+    // for the animation and data
     val predictionData by produceState<List<ChartData>>(
         initialValue = emptyList(), year, month, disease
     ) {
@@ -545,158 +642,168 @@ fun Barchart(year: String, month: String, disease: String) {
         )
     }
 
-    // Display the graph using predictionData
-    if (predictionData.isNotEmpty()) {
-
-        // Animation progress
-        val animatedProgress = remember { Animatable(0f) }
-        LaunchedEffect(Unit) {
-            delay(100)
-            animatedProgress.animateTo(
-                targetValue = 1f,
-                animationSpec = tween(durationMillis = 1000, easing = LinearOutSlowInEasing)
-            )
-        }
-
-        // draw the bar graph using the canvas wraped inside a box
+    if (predictionData.isEmpty()) {
         Box(
+            contentAlignment = Alignment.Center,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(325.dp)
-                .padding(16.dp)
-                .background(MaterialTheme.colorScheme.surface)
+                .height(containerHeight)
+                .background(MaterialTheme.colorScheme.inverseOnSurface)
         ) {
-            Canvas(
-                contentDescription = "Bar chart", modifier = Modifier.fillMaxSize()
-            ) {
-                val barSpacing = 20.dp.toPx()
-                val maxValue = predictionData.maxOfOrNull { it.predictionCount[disease] ?: 0 } ?: 1
-                val barWidth =
-                    (size.width - (predictionData.size + 1) * barSpacing) / predictionData.size
-                val scaleY = size.height / (maxValue * 1.5f)  // extra space for labels
-
-                // Draw y-axis
-                drawLine(
-                    color = Color.Gray,
-                    start = Offset(50f, 0f),
-                    end = Offset(50f, size.height - 50f),
-                    strokeWidth = 2f
-                )
-
-                // Draw X-axis
-                drawLine(
-                    color = Color.Gray,
-                    start = Offset(50f, size.height - 50f),
-                    end = Offset(size.width, size.height - 50f),
-                    strokeWidth = 2f
-                )
-
-                // Draw Y-axis labels
-                val yStep = maxValue / 5
-                for (i in 0..5) {
-                    val value = i * yStep
-                    val yPos = size.height - 50f - (value * scaleY * animatedProgress.value)
-
-                    // Draw tick mark
-                    drawLine(
-                        color = Color.Gray,
-                        start = Offset(45f, yPos),
-                        end = Offset(50f, yPos),
-                        strokeWidth = 2f
-                    )
-
-                    // Draw label
-                    drawContext.canvas.nativeCanvas.apply {
-                        drawText(
-                            value.toString(), 30f, yPos + 10f, android.graphics.Paint().apply {
-                                color = android.graphics.Color.BLACK
-                                textSize = 24f
-                                textAlign = android.graphics.Paint.Align.RIGHT
-                            })
-                    }
-                }
-
-                // draw bars and x-axis labels
-                predictionData.forEachIndexed { index, data ->
-                    val count = data.predictionCount[disease] ?: 0
-                    val barHeight = count * scaleY * animatedProgress.value
-                    val x = 50f + barSpacing + index * (barWidth + barSpacing)
-                    val y = size.height - 50f - barHeight
-
-                    // draw bar
-                    drawRect(
-                        color = Color(0xFF3D09FF),
-                        topLeft = Offset(x, y),
-                        size = Size(barWidth, barHeight),
-                        style = Fill
-                    )
-
-                    // Draw value label on top of bar
-                    drawContext.canvas.nativeCanvas.apply {
-                        drawText(
-                            count.toString(),
-                            x + barWidth / 2,
-                            y - 10f,
-                            android.graphics.Paint().apply {
-                                color = android.graphics.Color.BLACK
-                                textSize = 24f
-                                textAlign = android.graphics.Paint.Align.CENTER
-                            })
-                    }
-
-                    // Draw X-axis label (assuming data has a label property)
-                    drawContext.canvas.nativeCanvas.apply {
-                        drawText(
-                            data.label,  // Replace with your actual label property
-                            x + barWidth / 2, size.height - 20f, android.graphics.Paint().apply {
-                                color = android.graphics.Color.BLACK
-                                textSize = 24f
-                                textAlign = android.graphics.Paint.Align.CENTER
-                            })
-                    }
-                }
-            }
-
-            // Add chart title
             Text(
-                text = "Monthly Summary of $disease", style = TextStyle(
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                ), modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 8.dp)
-            )
-
-            // Add Y-axis label
-            Box(
-                modifier = Modifier
-                    .rotate(-90f)
-                    .align(Alignment.CenterStart)
-                    .offset(x = (-40).dp)
-            ) {
-                Text(
-                    text = "Number of Predictions", style = TextStyle(
-                        fontSize = 16.sp, fontWeight = FontWeight.Bold
-                    ), textAlign = TextAlign.Center
-                )
-            }
-
-            // Add X-axis label
-            Text(
-                text = "Categories",  // Change this to appropriate label
-                style = TextStyle(
-                    fontSize = 16.sp, fontWeight = FontWeight.Bold
-                ), modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 8.dp)
+                text = "No Data Found",
             )
         }
-    } else Text("No data found.")
+        return
+    }
+
+    // extract the heights and percentage based on the given data
+    val totalCount = predictionData.sumOf { it.predictionCount.values.sum() }.toFloat()
+    val maxBarHeight = 340f
+    if (totalCount > 0f) {
+        val (heights, percentages) = predictionData.map { data ->
+            val count = data.predictionCount.values.sum()
+            val percent = (count / totalCount) * 100f
+            val height = (percent / 100f) * maxBarHeight
+            Pair(height, "${"%.1f".format(percent)}%")
+        }.unzip()
+        chartSkeleton(containerHeight, heights, percentages, disease)
+    }
 }
 
-@Preview(showBackground = true, showSystemUi = true)
+// composable function for the actual chart
 @Composable
-fun PreviewAnalysis() {
-    InitDiseaseAnalysisUI()
+fun chartSkeleton(
+    containerHeight: Dp,
+    heights: List<Float>,
+    percentages: List<String>,
+    disease: String
+) {
+    // variables declaration
+    val scaleGap = 35.dp
+    val containerWidth = 300.dp
+    val barWidth = scaleGap
+    val barSpacing = scaleGap * 2
+    val strokeWidth = 2f
+    val tickLength = 25f
+    val baseOffsetX = 30.dp
+    val baseOffsetY = containerHeight / 2 + 120.dp
+
+    val animatedProgress = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        delay(100)
+        animatedProgress.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(durationMillis = 1000, easing = LinearOutSlowInEasing)
+        )
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(containerHeight)
+            .background(MaterialTheme.colorScheme.inverseOnSurface)
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val offsetX = baseOffsetX.toPx()
+            val offsetY = baseOffsetY.toPx()
+            val pxScaleGap = scaleGap.toPx()
+            val pxBarWidth = barWidth.toPx()
+
+            // Y-Axis
+            drawLine(
+                color = Color.Blue,
+                start = Offset(offsetX, 100f),
+                end = Offset(offsetX, offsetY),
+                strokeWidth = strokeWidth
+            )
+
+            var currentY = 100f
+            while (currentY <= offsetY) {
+                drawLine(
+                    color = Color.Black,
+                    start = Offset(offsetX - tickLength / 2, currentY),
+                    end = Offset(offsetX + tickLength / 2, currentY),
+                    strokeWidth = strokeWidth
+                )
+                currentY += pxScaleGap
+            }
+
+            // X-Axis & Ticks
+            val xEnd = containerWidth.toPx() + offsetX - 120f
+            var xAxisY = offsetY
+
+                drawLine(
+                    color = Color.Blue,
+                    start = Offset(offsetX, xAxisY),
+                    end = Offset(xEnd, xAxisY),
+                    strokeWidth = strokeWidth
+                )
+
+                var currentX = offsetX
+                while (currentX <= xEnd) {
+                    drawLine(
+                        color = Color.Black,
+                        start = Offset(currentX, xAxisY - 7.5f),
+                        end = Offset(currentX, xAxisY + 7.5f),
+                        strokeWidth = strokeWidth
+                    )
+                    currentX += pxScaleGap
+                }
+                xAxisY -= 96f
+
+            // Bars
+            var currentBarX = offsetX + pxScaleGap
+            heights.forEachIndexed { index, barHeight ->
+                drawRect(
+                    color = Color.Blue,
+                    topLeft = Offset(currentBarX, offsetY - pxScaleGap / 2 - barHeight + 35f),
+                    size = Size(pxBarWidth, barHeight * animatedProgress.value),
+                    style = Fill
+                )
+                currentBarX += barSpacing.toPx()
+            }
+        }
+
+        // Y-Axis Label
+        Text(
+            text = "Predictions",
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .rotate(-90f)
+                .offset(x = (-150).dp, y = (-135).dp)
+        )
+
+        // Title
+        Text(
+            text = disease,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .offset(y = 10.dp)
+        )
+
+        // X-Axis Label
+        Text(
+            text = "Weeks",
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .offset(y = 310.dp)
+        )
+
+        // Percentages on top of bars
+        var barOffsetX = baseOffsetX + scaleGap
+        heights.forEachIndexed { index, barHeight ->
+            Text(
+                text = percentages.getOrElse(index) { "?" },
+                textAlign = TextAlign.Center,
+                modifier = Modifier.offset(
+                    x = barOffsetX, y = baseOffsetY + scaleGap / 2 - barHeight.dp / 2 - 40.dp
+                )
+            )
+            barOffsetX += barSpacing
+        }
+    }
 }
