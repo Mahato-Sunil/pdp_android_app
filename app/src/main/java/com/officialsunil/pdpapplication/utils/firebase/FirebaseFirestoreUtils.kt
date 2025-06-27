@@ -137,10 +137,7 @@ object FirebaseFirestoreUtils {
 
     // function to delete the disease information based on the provided disease id ref
     suspend fun deleteDiseaseInfo(
-        userId: String,
-        diseaseId: String,
-        onSuccess: () -> Unit,
-        onError: (String) -> Unit
+        userId: String, diseaseId: String, onSuccess: () -> Unit, onError: (String) -> Unit
     ) {
         Log.d(TAG, "User Id : $userId \nDisease Id : $diseaseId")
         try {
@@ -149,17 +146,14 @@ object FirebaseFirestoreUtils {
                 .whereEqualTo("diseaseId", diseaseId).get().await()
 
             // delete the documents
-            for (document in snapshot.documents)
-                fireDb.collection(DBNAME).document(userId).collection("Predictions").document(document.id)
-                    .delete()
-                    .addOnSuccessListener {
-                        onSuccess()
-                        Log.d(TAG, "Successfully deleted!")
-                    }
-                    .addOnFailureListener { e ->
-                        onError("${e.message}")
-                        Log.w(TAG, "Error deleting document", e)
-                    }
+            for (document in snapshot.documents) fireDb.collection(DBNAME).document(userId)
+                .collection("Predictions").document(document.id).delete().addOnSuccessListener {
+                    onSuccess()
+                    Log.d(TAG, "Successfully deleted!")
+                }.addOnFailureListener { e ->
+                    onError("${e.message}")
+                    Log.w(TAG, "Error deleting document", e)
+                }
 
         } catch (err: Exception) {
             Log.e(TAG, "Error: ${err.message}")

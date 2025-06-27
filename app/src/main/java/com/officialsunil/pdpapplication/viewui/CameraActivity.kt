@@ -50,9 +50,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.TextStyle
@@ -105,8 +108,10 @@ class CameraActivity : ComponentActivity() {
 
     //  take photo function
     private fun takePhoto(
-        controller: LifecycleCameraController, onPhotoCapture: (Bitmap) -> Unit
+        controller: LifecycleCameraController,
+        onPhotoCapture: (Bitmap) -> Unit
     ) {
+        val TAG = "CameraActivity"
         controller.takePicture(
             ContextCompat.getMainExecutor(applicationContext),
             object : ImageCapture.OnImageCapturedCallback() {
@@ -134,8 +139,9 @@ class CameraActivity : ComponentActivity() {
                         matrix,
                         true
                     )
+
                     // crop the image
-                    val boxSizeRatio = 0.8f
+                    val boxSizeRatio = 0.74f
                     val boxSize =
                         (minOf(rotatedBitmap.width, rotatedBitmap.height) * boxSizeRatio).toInt()
 
@@ -151,6 +157,15 @@ class CameraActivity : ComponentActivity() {
 
                     val resizedBitmap =
                         croppedBitmap.scale(224, 224)   // scale the bitmap to 224 by 224 size
+
+                    Log.d(TAG, "box size(px): $boxSize")
+                    Log.d(TAG, "crop size (px): left=$cropLeft, top=$cropTop")
+                    Log.d(TAG, "safe crop size (px): top=$safeCropTop, left=$safeCropLeft")
+                    Log.d(TAG, "Crop rect (bitmap coords): left=$cropLeft, top=$cropTop")
+                    Log.d(TAG, "Croped bitmap (bitmap coords): left=$croppedBitmap")
+                    Log.d(TAG, "resized bitmap =$resizedBitmap")
+
+
                     onPhotoCapture(resizedBitmap)
                     image.close()
                 }
@@ -250,14 +265,16 @@ class CameraActivity : ComponentActivity() {
         cameraViewModel: CameraViewModel,
         classifications: List<Classification>
     ) {
-        val context = LocalContext.current  // for camera controller
+     val context = LocalContext.current  // for camera controller
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .systemBarsPadding()
         ) {
+            // call camera preview here
             CameraPreview(
-                controller = controller, modifier = Modifier.fillMaxSize()
+                controller = controller,
+                modifier = Modifier.fillMaxSize(),
             )
 
             Box(
@@ -390,7 +407,8 @@ class CameraActivity : ComponentActivity() {
                 IconButton(
                     onClick = {
                         takePhoto(
-                            controller = controller, onPhotoCapture = cameraViewModel::onTakePhoto
+                            controller = controller,
+                            onPhotoCapture = cameraViewModel::onTakePhoto
                         )
                         showPrediction(true)
                     }) {

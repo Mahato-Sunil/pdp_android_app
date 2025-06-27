@@ -1,3 +1,11 @@
+/*
+    This class contains the UI and logics for
+    Disease Analysis Section
+
+    It shows the Graphs, Charts and Analysis Results
+    of the total predictions made.
+
+ */
 package com.officialsunil.pdpapplication.viewui
 
 import android.annotation.SuppressLint
@@ -88,6 +96,7 @@ import com.officialsunil.pdpapplication.utils.customchart.getCompletePredictionS
 import com.officialsunil.pdpapplication.utils.customchart.getStatistics
 import com.officialsunil.pdpapplication.viewui.ui.theme.PDPApplicationTheme
 import kotlinx.coroutines.delay
+
 
 class DiseaseAnalysis : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -733,24 +742,24 @@ fun chartSkeleton(
             val xEnd = containerWidth.toPx() + offsetX - 120f
             var xAxisY = offsetY
 
+            drawLine(
+                color = Color.Blue,
+                start = Offset(offsetX, xAxisY),
+                end = Offset(xEnd, xAxisY),
+                strokeWidth = strokeWidth
+            )
+
+            var currentX = offsetX
+            while (currentX <= xEnd) {
                 drawLine(
-                    color = Color.Blue,
-                    start = Offset(offsetX, xAxisY),
-                    end = Offset(xEnd, xAxisY),
+                    color = Color.Black,
+                    start = Offset(currentX, xAxisY - 7.5f),
+                    end = Offset(currentX, xAxisY + 7.5f),
                     strokeWidth = strokeWidth
                 )
-
-                var currentX = offsetX
-                while (currentX <= xEnd) {
-                    drawLine(
-                        color = Color.Black,
-                        start = Offset(currentX, xAxisY - 7.5f),
-                        end = Offset(currentX, xAxisY + 7.5f),
-                        strokeWidth = strokeWidth
-                    )
-                    currentX += pxScaleGap
-                }
-                xAxisY -= 96f
+                currentX += pxScaleGap
+            }
+            xAxisY -= 96f
 
             // Bars
             var currentBarX = offsetX + pxScaleGap
