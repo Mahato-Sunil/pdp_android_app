@@ -1,11 +1,16 @@
 package com.officialsunil.pdpapplication.viewui
 
 import android.os.Bundle
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +28,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -51,6 +57,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.officialsunil.pdpapplication.R
 import com.officialsunil.pdpapplication.utils.DiseaseInfo.getPredictionDetails
@@ -61,6 +68,7 @@ import com.officialsunil.pdpapplication.utils.firebase.FirebaseUserCredentials
 import com.officialsunil.pdpapplication.utils.firebase.ImageToBase64
 import com.officialsunil.pdpapplication.viewui.ui.theme.PDPApplicationTheme
 import kotlinx.coroutines.launch
+import okio.blackholeSink
 
 class StatisticsActivity : ComponentActivity() {
 
@@ -81,12 +89,10 @@ class StatisticsActivity : ComponentActivity() {
 @Composable
 fun StatisticsUILayout(diseaseIdRef: String) {
     Scaffold(
-        topBar = { StatsHeading(diseaseIdRef) },
-        modifier = Modifier.systemBarsPadding()
+        topBar = { StatsHeading(diseaseIdRef) }, modifier = Modifier.systemBarsPadding()
     ) { innerPadding ->
         StatsContainer(
-            diseaseIdRef = diseaseIdRef,
-            modifier = Modifier.padding(innerPadding)
+            diseaseIdRef = diseaseIdRef, modifier = Modifier.padding(innerPadding)
         )
     }
 }
@@ -151,6 +157,7 @@ fun StatsContainer(diseaseIdRef: String, modifier: Modifier) {
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -172,13 +179,6 @@ fun StatsContainer(diseaseIdRef: String, modifier: Modifier) {
                     modifier = Modifier.size(200.dp)
                 )
             }
-//            Image(
-//                bitmap = imageBitmap?.asImageBitmap() ?: ,
-//                contentDescription = "Disease Image",
-//                contentScale = ContentScale.Fit,
-//                modifier = Modifier.fillMaxSize()
-//
-//            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -193,7 +193,9 @@ fun StatsContainer(diseaseIdRef: String, modifier: Modifier) {
                 .padding(bottom = 16.dp)
         )
 
-        Spacer(modifier = Modifier.height(26.dp))
+        Spacer(modifier = Modifier.height(26.dp))/*
+        Show this after the  severitiy level feature is added
+         *//*
 
         Text(
             text = "Damage Scale", textAlign = TextAlign.Start, style = TextStyle(
@@ -242,6 +244,7 @@ fun StatsContainer(diseaseIdRef: String, modifier: Modifier) {
                 else Color.Red,
             )
         }
+         */
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -274,6 +277,61 @@ fun StatsContainer(diseaseIdRef: String, modifier: Modifier) {
         )
 
         Spacer(modifier = Modifier.height(32.dp))
+
+        // delete button to delete the given  predicted results
+        val coroutineScope = rememberCoroutineScope()
+        val context = LocalContext.current
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth(.7f)
+                .height(65.dp)
+                .border(border = BorderStroke(1.dp, Color.Red), shape = RoundedCornerShape(10.dp))
+                .clickable {
+                    coroutineScope.launch {
+                        FirebaseFirestoreUtils.deleteDiseaseInfo(
+                            diseaseId = diseaseIdRef,
+                            userId = FirebaseUserCredentials.getCurrentUserCredentails()?.uid ?: "",
+                            onSuccess = {
+                                Toast.makeText(
+                                    context, "Deleted Successfully", Toast.LENGTH_SHORT
+                                ).show()
+                                // navigate to the diagnoses list activity
+                                NavigationUtils.navigate(
+                                    context = context, destination = "diagnosesList", finish = true
+                                )
+
+                                Log.d(
+                                    "Firebase",
+                                    "Data is Deleted => \n Id : ${diseaseIdRef} \n Name: ${diseaseDesc.diseaseName} "
+                                )
+                            },
+                            onError = {
+                                // show the toast message
+                                Toast.makeText(
+                                    context, "Deletion Failed. Try Again !", Toast.LENGTH_SHORT
+                                ).show()
+
+                                Log.e("Firebase", "Error : $it")
+                            })
+                    }
+                }
+                .align(alignment = Alignment.CenterHorizontally)
+
+        ) {
+            Text(
+                text = "Delete Forever", style = TextStyle(
+                    fontSize = 18.sp,
+                    color = Color.Red,
+                    fontWeight = FontWeight.W500,
+                    letterSpacing = 0.1.em
+                )
+            )
+        }
+
+
+        Spacer(modifier = Modifier.height(40.dp))
     }
 }
 

@@ -17,7 +17,7 @@ import kotlinx.coroutines.tasks.await
 
 
 object FirebaseFirestoreUtils {
-    private const val TAG = "Firestore Database"
+    private const val TAG = "Firebase"
     private const val DBNAME = "PdpApplication"
     private val fireDb by lazy { Firebase.firestore }
 
@@ -135,4 +135,35 @@ object FirebaseFirestoreUtils {
         }
     }
 
+    // function to delete the disease information based on the provided disease id ref
+    suspend fun deleteDiseaseInfo(
+        userId: String,
+        diseaseId: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        Log.d(TAG, "User Id : $userId \nDisease Id : $diseaseId")
+        try {
+            // get the reference to the  disease snapshot
+            val snapshot = fireDb.collection(DBNAME).document(userId).collection("Predictions")
+                .whereEqualTo("diseaseId", diseaseId).get().await()
+
+            // delete the documents
+            for (document in snapshot.documents)
+                fireDb.collection(DBNAME).document(userId).collection("Predictions").document(document.id)
+                    .delete()
+                    .addOnSuccessListener {
+                        onSuccess()
+                        Log.d(TAG, "Successfully deleted!")
+                    }
+                    .addOnFailureListener { e ->
+                        onError("${e.message}")
+                        Log.w(TAG, "Error deleting document", e)
+                    }
+
+        } catch (err: Exception) {
+            Log.e(TAG, "Error: ${err.message}")
+            onError("Error! Failed to Delete data")
+        }
+    }
 }
