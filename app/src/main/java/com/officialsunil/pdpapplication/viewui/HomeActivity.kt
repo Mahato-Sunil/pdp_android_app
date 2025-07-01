@@ -21,7 +21,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
@@ -29,6 +31,7 @@ import androidx.compose.material.icons.filled.CameraEnhance
 import androidx.compose.material.icons.filled.House
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -51,6 +54,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -80,19 +84,17 @@ class HomeActivity : ComponentActivity() {
     }
 }
 
-//  activity layout
-@Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun InitHomeActivityUI() {
-    Scaffold(topBar = { HomeHeadingUI() }, bottomBar = {
-        HomeButtonContainer()
-    }) { innerPadding ->
+    Scaffold(
+        topBar = { HomeHeadingUI() },
+        bottomBar = { HomeButtonContainer() },
+        containerColor = Color.White
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .background(Color.White)
         ) {
             HomeContainer()
         }
@@ -114,18 +116,10 @@ fun HomeHeadingUI() {
         modifier = Modifier
             .systemBarsPadding()
             .fillMaxWidth()
-            .height(60.dp)
-            .background(Color.LightGray)
+            .height(80.dp)
+            .background(Color(0xAAE0ECF6))
 
     ) {
-        Image(
-            imageVector = Icons.Default.Person,
-            contentDescription = "Profile Icon",
-            modifier = Modifier
-                .fillMaxHeight()
-                .padding(start = 16.dp, end = 16.dp)
-        )
-
         Text(
             text = currentUser?.name ?: "Anonymous",
             color = Color.Black,
@@ -133,7 +127,7 @@ fun HomeHeadingUI() {
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 16.dp),
+                .padding(start = 36.dp),
             style = TextStyle(
                 letterSpacing = 2.sp,
             )
@@ -166,141 +160,145 @@ fun HomeContainer() {
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-    ) {
-        // if there is no data show the prediction rationale
-        if (!isDataAvailable) {
-            NoDataRationale(onTakePictureClicked = {
-                NavigationUtils.navigate(localContext, "camera")
-            })
-        } else {
-            // show the  list of the data
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 10.dp, end = 20.dp)
-                    .height(35.dp)
+    // if there is no data show the prediction rationale
+    if (!isDataAvailable) {
+        NoDataRationale(onTakePictureClicked = {
+            NavigationUtils.navigate(localContext, "camera")
+        })
+    } else {
+        // show the  list of the data
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 10.dp, end = 20.dp)
+                .height(40.dp)
+        ) {
+            Text(
+                text = "Your diagnoses",
+                style = TextStyle(
+                    color = colorResource(R.color.font_color),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = TextUnit(1.5f, TextUnitType.Sp)
+                ),
+            )
+
+            Text(
+                text = "View All", style = TextStyle(
+                    color = Color.Blue,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Normal,
+                    letterSpacing = 1.2.sp,
+                    textDecoration = TextDecoration.Underline
+                ), modifier = Modifier.clickable {
+                    NavigationUtils.navigate(localContext, "diagnosesList")
+                })
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // fill this area using the data `from the firebase
+        val data = predictionData?.retrievePredictionData?.get(0)  // first data only
+        Log.d("Firebase", "First Data : $data")
+        val convertedBitmap = ImageToBase64.convertBase64ToImage(data?.imageBase64String ?: "")
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .padding(5.dp)
+                .fillMaxWidth()
+                .background(Color(0xAAE0ECF6))
+        ) {
+            Image(
+                painter = if (convertedBitmap != null) BitmapPainter(convertedBitmap.asImageBitmap())
+                else painterResource(R.drawable.no_picture),
+                contentDescription = "Recent History Image",
+                modifier = Modifier.size(100.dp)
+            )
+
+            Column(
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.Start,
             ) {
+                //date
+                val formattedTime =
+                    CustomDateTimeFormatter.formatDateTime(data?.timestamp.toString())
                 Text(
-                    text = "Your diagnoses",
-                    style = TextStyle(
-                        color = colorResource(R.color.font_color),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = TextUnit(1.5f, TextUnitType.Sp)
-                    ),
+                    text = formattedTime, style = TextStyle(
+                        fontSize = 16.sp, fontWeight = FontWeight.W400, color = Color.Gray
+                    )
                 )
 
+                Spacer(Modifier.height(16.dp))
+
                 Text(
-                    text = "View All", style = TextStyle(
-                        color = Color.Blue,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Normal,
-                        letterSpacing = 1.2.sp,
-                        textDecoration = TextDecoration.Underline
-                    ), modifier = Modifier.clickable {
-                        NavigationUtils.navigate(localContext, "diagnosesList")
-                    })
+                    text = data?.predictedName.toString(), style = TextStyle(
+                        color = colorResource(R.color.font_color),
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.W800,
+                        letterSpacing = 1.1.sp,
+                        textAlign = TextAlign.Start
+                    )
+                )
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // fill this area using the data `from the firebase
-            val data = predictionData?.retrievePredictionData?.get(0)  // first data only
-            Log.d("Firebase", "First Data : $data")
-            val convertedBitmap = ImageToBase64.convertBase64ToImage(data?.imageBase64String ?: "")
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier
-                    .padding(5.dp)
-                    .fillMaxWidth()
-                    .background(colorResource(R.color.light_card_background))
+            IconButton(
+                onClick = {
+                    NavigationUtils.navigate(
+                        context = localContext,
+                        destination = "statistics",
+                        data = data?.diseaseId.toString()
+                    )
+                },
             ) {
-                Image(
-                    painter = if (convertedBitmap != null) BitmapPainter(convertedBitmap.asImageBitmap())
-                    else painterResource(R.drawable.no_picture),
-                    contentDescription = "Recent History Image",
-                    modifier = Modifier.size(100.dp)
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                    contentDescription = "See More Icon",
+                    tint = colorResource(R.color.font_color)
                 )
-
-                Column(
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    //date
-                    val formattedTime =
-                        CustomDateTimeFormatter.formatDateTime(data?.timestamp.toString())
-                    Text(
-                        text = formattedTime,
-                        style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray)
-                    )
-
-                    Text(
-                        text = data?.predictedName.toString(), style = TextStyle(
-                            color = colorResource(R.color.font_color),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                            letterSpacing = 1.1.sp,
-                            textAlign = TextAlign.Start
-                        ), modifier = Modifier
-                            .fillMaxWidth(.75f)
-                            .height(25.dp)
-                    )
-                }
-
-                IconButton(
-                    onClick = {
-                        NavigationUtils.navigate(
-                            context = localContext,
-                            destination = "statistics",
-                            data = data?.diseaseId.toString()
-                        )
-                    },
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
-                        contentDescription = "See More Icon",
-                        tint = colorResource(R.color.font_color)
-                    )
-                }
             }
         }
     }
 }
 
-// prediction rationale to show if there is no any prediction data
 @Composable
 fun NoDataRationale(
     onTakePictureClicked: () -> Unit
 ) {
-    Spacer(Modifier.height(32.dp))
-    Image(
-        painter = painterResource(R.drawable.warning),
-        contentDescription = "No Predictions",
+    Column(
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .size(120.dp)
-            .clip(MaterialTheme.shapes.medium)
-    )
-    Spacer(Modifier.height(32.dp))
-    Text(
-        text = "Looks like you haven't scanned any images yet.",
-        textAlign = TextAlign.Center,
-        style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray)
-    )
-    Spacer(Modifier.height(32.dp))
-    Button(
-        onClick = onTakePictureClicked,
-        shape = MaterialTheme.shapes.medium,
-        modifier = Modifier.fillMaxWidth(0.7f)
+            .fillMaxSize()
+            .padding(16.dp)
+            .background(Color.White),
     ) {
-        Text(text = "Take Picture")
+        Text(
+            text = "Looks like you haven't scanned any images yet.",
+            textAlign = TextAlign.Center,
+            style = TextStyle(
+                fontSize = 20.sp, fontWeight = FontWeight.W500
+            )
+        )
+        Spacer(Modifier.height(32.dp))
+        Button(
+            onClick = onTakePictureClicked,
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(.7f)
+                .height(60.dp),
+            shape = RoundedCornerShape(10.dp),
+            colors = ButtonDefaults.buttonColors(Color(0xFF1EF567))
+        ) {
+            Text(
+                text = "Make Predictions", style = TextStyle(
+                    fontSize = 20.sp, fontWeight = FontWeight.W500, letterSpacing = 1.2.sp
+                )
+            )
+        }
     }
 }
 
@@ -315,34 +313,30 @@ fun HomeButtonContainer() {
         modifier = Modifier
             .systemBarsPadding()
             .fillMaxWidth()
-            .height(120.dp)
-            .background(Color.White)
+            .wrapContentHeight()
+            .background(Color(0xAAE0ECF6))
 
     ) {
         //home
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier.padding(8.dp)
-        ) {
-            IconButton(
-                onClick = {
+            verticalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .padding(vertical = 16.dp)
+                .clickable {
                     val currentActivity = context as? Activity
                     if (currentActivity !is HomeActivity) {
                         val intent = Intent(context, HomeActivity::class.java)
                         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
                         context.startActivity(intent)
                     }
-                },
-            ) {
-                Icon(
-                    imageVector = Icons.Default.House,
-                    contentDescription = "Home Icon",
-                    tint = Color(4, 32, 129, 255),
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-
+                }) {
+            Icon(
+                imageVector = Icons.Default.House,
+                contentDescription = "Home Icon",
+                tint = Color(0, 9, 44, 255),
+                modifier = Modifier.size(38.dp)
+            )
             Text(
                 text = "Home", style = TextStyle(
                     fontSize = 18.sp, fontWeight = FontWeight.W600
@@ -353,21 +347,18 @@ fun HomeButtonContainer() {
         // shutter button
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier.padding(8.dp)
-        ) {
-            IconButton(
-                onClick = {
+            verticalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .padding(vertical = 16.dp)
+                .clickable {
                     NavigationUtils.navigate(context, "camera", true)
                 }) {
-                Icon(
-                    imageVector = Icons.Default.CameraEnhance,
-                    contentDescription = "Camera Icon",
-                    tint = Color(4, 32, 129, 255),
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-
+            Icon(
+                imageVector = Icons.Default.CameraEnhance,
+                contentDescription = "Camera Icon",
+                tint = Color(0, 9, 44, 255),
+                modifier = Modifier.size(38.dp)
+            )
             Text(
                 text = "Capture", style = TextStyle(
                     fontSize = 18.sp, fontWeight = FontWeight.W600
@@ -377,34 +368,24 @@ fun HomeButtonContainer() {
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier.padding(8.dp)
-        ) {
-            IconButton(
-                onClick = {
+            verticalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .padding(vertical = 16.dp)
+                .clickable {
                     NavigationUtils.navigate(context, "accountCenter")
                 }) {
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = "Camera Icon",
-                    tint = Color(4, 32, 129, 255),
-                    modifier = Modifier.fillMaxSize()
-                )
+            Icon(
+                imageVector = Icons.Default.Person,
+                contentDescription = "Camera Icon",
+                tint = Color(0, 9, 44, 255),
+                modifier = Modifier.size(38.dp)
+            )
 
-                Text(
-                    text = "My Profile", style = TextStyle(
-                        fontSize = 18.sp, fontWeight = FontWeight.W600
-                    )
+            Text(
+                text = "My Profile", style = TextStyle(
+                    fontSize = 18.sp, fontWeight = FontWeight.W600
                 )
-            }
+            )
         }
     }
 }
-
-//@Preview(showBackground = true, showSystemUi = true)
-//@Composable
-//fun PreviewHomeActivityUI() {
-//    PDPApplicationTheme {
-//        InitHomeActivityUI()
-//    }
-//}
