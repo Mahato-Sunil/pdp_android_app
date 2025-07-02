@@ -307,10 +307,10 @@ fun AnalysisSection() {
 
 
     val imageRes = when (highestProbability.label) {
-        "Early_Blight" -> R.drawable.permission_rationale
-        "Late_Blight" -> R.drawable.image
-        "Healthy" -> R.drawable.no_profile
-        else -> R.drawable.warning
+        "Early_Blight" -> R.drawable.early_blight
+        "Late_Blight" -> R.drawable.late_blight
+        "Healthy" -> R.drawable.healthy
+        else -> R.drawable.no_image
     }
 
     val scoreDiff = highestProbability.score - secondHighestProbability.score
@@ -320,17 +320,17 @@ fun AnalysisSection() {
             in 70f..100f -> "Severely affected — ${scoreDiff.toInt()}% higher than ${secondHighestProbability.label}."
             in 40f..69f -> "Moderately affected — ${scoreDiff.toInt()}% higher than ${secondHighestProbability.label}."
             in 0f..39f -> "Mildly affected — ${scoreDiff.toInt()}% higher than ${secondHighestProbability.label}."
-            else -> null
+            else -> ""
         }
 
         "Late_Blight" -> when (scoreDiff) {
             in 70f..100f -> "Severely affected — ${scoreDiff.toInt()}% higher than ${secondHighestProbability.label}."
             in 40f..69f -> "Moderately affected — ${scoreDiff.toInt()}% higher than ${secondHighestProbability.label}."
             in 0f..39f -> "Mildly affected — ${scoreDiff.toInt()}% higher than ${secondHighestProbability.label}."
-            else -> null
+            else -> ""
         }
 
-        else -> null
+        else -> ""
     }
 
     Log.d("ChartData", highestProbability.toString())

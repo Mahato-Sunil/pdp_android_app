@@ -145,7 +145,7 @@ class MainActivity : ComponentActivity() {
     ) {
         Column(
             modifier = Modifier
-                .background(color = colorResource(R.color.light_background))
+                .background(Color.White)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
@@ -286,6 +286,7 @@ class MainActivity : ComponentActivity() {
 
             Spacer(modifier = Modifier.height(20.dp))
 
+
             Button(
                 onClick = {
                     initEmailPasswordSignin(emailInpt.toString(), passwordInpt.toString())
@@ -341,7 +342,7 @@ class MainActivity : ComponentActivity() {
                     initGoogleLogin()
                 },
                 colors = ButtonColors(
-                    containerColor = colorResource(id = R.color.light_background),
+                    containerColor = Color.White,
                     contentColor = colorResource(id = R.color.font_color),
                     disabledContainerColor = Color(0xFFD8D8D8),
                     disabledContentColor = Color(0xFF575757)
@@ -403,7 +404,7 @@ class MainActivity : ComponentActivity() {
                     NavigationUtils.navigate(context, "signinRationale", true)
                 },
                 colors = ButtonColors(
-                    containerColor = colorResource(id = R.color.light_background),
+                    containerColor =Color.White,
                     contentColor = colorResource(id = R.color.font_color),
                     disabledContainerColor = Color(0xFFD8D8D8),
                     disabledContentColor = Color(0xFF575757)

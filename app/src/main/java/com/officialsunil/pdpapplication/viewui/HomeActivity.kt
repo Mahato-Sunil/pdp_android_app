@@ -228,7 +228,7 @@ fun HomeContainer() {
                     CustomDateTimeFormatter.formatDateTime(data?.timestamp.toString())
                 Text(
                     text = formattedTime, style = TextStyle(
-                        fontSize = 16.sp, fontWeight = FontWeight.W400, color = Color.Gray
+                        fontSize = 14.sp, fontWeight = FontWeight.W400, color = Color.Gray
                     )
                 )
 
@@ -237,7 +237,7 @@ fun HomeContainer() {
                 Text(
                     text = data?.predictedName.toString(), style = TextStyle(
                         color = colorResource(R.color.font_color),
-                        fontSize = 22.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.W800,
                         letterSpacing = 1.1.sp,
                         textAlign = TextAlign.Start
@@ -335,11 +335,11 @@ fun HomeButtonContainer() {
                 imageVector = Icons.Default.House,
                 contentDescription = "Home Icon",
                 tint = Color(0, 9, 44, 255),
-                modifier = Modifier.size(38.dp)
+                modifier = Modifier.size(32.dp)
             )
             Text(
                 text = "Home", style = TextStyle(
-                    fontSize = 18.sp, fontWeight = FontWeight.W600
+                    fontSize = 14.sp, fontWeight = FontWeight.W500, letterSpacing = 1.2.sp
                 )
             )
         }
@@ -357,11 +357,11 @@ fun HomeButtonContainer() {
                 imageVector = Icons.Default.CameraEnhance,
                 contentDescription = "Camera Icon",
                 tint = Color(0, 9, 44, 255),
-                modifier = Modifier.size(38.dp)
+                modifier = Modifier.size(32.dp)
             )
             Text(
                 text = "Capture", style = TextStyle(
-                    fontSize = 18.sp, fontWeight = FontWeight.W600
+                    fontSize = 14.sp, fontWeight = FontWeight.W500, letterSpacing = 1.2.sp
                 )
             )
         }
@@ -378,12 +378,12 @@ fun HomeButtonContainer() {
                 imageVector = Icons.Default.Person,
                 contentDescription = "Camera Icon",
                 tint = Color(0, 9, 44, 255),
-                modifier = Modifier.size(38.dp)
+                modifier = Modifier.size(32.dp)
             )
 
             Text(
                 text = "My Profile", style = TextStyle(
-                    fontSize = 18.sp, fontWeight = FontWeight.W600
+                    fontSize = 14.sp, fontWeight = FontWeight.W500, letterSpacing = 1.2.sp
                 )
             )
         }
