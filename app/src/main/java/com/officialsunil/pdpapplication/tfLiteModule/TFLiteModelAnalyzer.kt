@@ -12,12 +12,12 @@ class TFLiteModelAnalyzer(
 
     private var frameSkipCounter = 0    // for skipping the frames to improve the performance
 
-    //overrie the analyzer
+    //override the analyzer
     override fun analyze(image: ImageProxy) {
         if (frameSkipCounter % 60 == 0) {
             val rotationDegrees = image.imageInfo.rotationDegrees
             val bitmap =
-                image.toBitmap().centerCrop(224, 224)   // change based on themodel requirements
+                image.toBitmap().centerCrop(224, 224)   // change based on the model requirements
 
             val results = classifier.getModelPrediction(bitmap, rotationDegrees)
             onResult(results)

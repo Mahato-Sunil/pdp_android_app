@@ -260,7 +260,7 @@ fun DiagnosesList(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(90.dp)
-                    .clickable { onItemClicked(prediction.diseaseId.toString()) }
+                    .clickable { onItemClicked(prediction.diseaseId) }
                     .background(Color.White)
                     .padding(horizontal = 16.dp)) {
 

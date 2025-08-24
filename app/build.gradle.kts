@@ -103,4 +103,6 @@ dependencies {
     implementation(libs.androidx.camera.mlkit.vision)
     implementation(libs.androidx.camera.extensions)
 
+    // for open cv
+    implementation(libs.opencv)
 }

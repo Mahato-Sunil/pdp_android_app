@@ -16,12 +16,12 @@ package com.officialsunil.pdpapplication.tfLiteModule
 import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
-import org.tensorflow.lite.Interpreter
-import org.tensorflow.lite.gpu.GpuDelegate
+import androidx.core.graphics.get
 import com.officialsunil.pdpapplication.tfLiteModule.ImagePreprocessing.getImageByteBuffer
 import com.officialsunil.pdpapplication.tfLiteModule.ImagePreprocessing.getRotatedBitmap
 import com.officialsunil.pdpapplication.utils.Classification
-import androidx.core.graphics.get
+import org.tensorflow.lite.Interpreter
+import org.tensorflow.lite.gpu.GpuDelegate
 
 class LiteRtClassifier(
     context: Context,
@@ -34,7 +34,7 @@ class LiteRtClassifier(
     private var interpreter: Interpreter? = null
     private var gpuDelegate: GpuDelegate? = null
 
-    private var TAG = "LiteRtClassifier"
+    private var tag = "LiteRtClassifier"
 
     //  initialize the classifier and load the model
     init {
@@ -63,16 +63,18 @@ class LiteRtClassifier(
         interpreter?.getInputTensor(0)?.let {
             val shape = it.shape()  // e.g., [1, 224, 224, 3]
             val dataType = it.dataType()
-            Log.d(TAG, "Model expects input shape: ${shape.joinToString()}, type: $dataType")
+            Log.d(tag, "Model expects input shape: ${shape.joinToString()}, type: $dataType")
         }
 
         // ✅ Log input image shape
-        Log.d(TAG, "Input bitmap size: ${rotatedBitmap.width}x${rotatedBitmap.height}")
-        Log.d(TAG, "Bitmap pixel (0,0): ${rotatedBitmap[0, 0]}")
+        Log.d(tag, "Input bitmap size: ${rotatedBitmap.width}x${rotatedBitmap.height}")
+        Log.d(tag, "Bitmap pixel (0,0): ${rotatedBitmap[0, 0]}")
 
         val result = Array(1) { FloatArray(numClasses) }
         interpreter?.run(byteBuffer, result)
         return result[0]
+
+        //close
     }
 
 
@@ -82,7 +84,7 @@ class LiteRtClassifier(
         val scores = classify(bitmap, rotation)
 
         // 🔍 Debugging: Log the raw model output
-        Log.d(TAG, "Model output scores: ${scores.joinToString { "%.4f".format(it) }}")
+        Log.d(tag, "Model output scores: ${scores.joinToString { "%.4f".format(it) }}")
 
         return scores.mapIndexed { index, score -> index to score }
             .filter { it.second >= threshold }.sortedByDescending { it.second }.take(topK)

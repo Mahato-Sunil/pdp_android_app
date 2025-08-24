@@ -219,7 +219,7 @@ fun AccountInformationContainer(context: Context) {
         }
     } else {
         val currentUsersCredentials = FirebaseUserCredentials.getCurrentUserCredentails()
-        val photoUrl = currentUsersCredentials?.photoUrl?.toString()
+        val photoUrl = currentUsersCredentials?.photoUrl
         val isEmailVerified = currentUsersCredentials?.isEmailVerified
 
         Spacer(Modifier.height(20.dp))

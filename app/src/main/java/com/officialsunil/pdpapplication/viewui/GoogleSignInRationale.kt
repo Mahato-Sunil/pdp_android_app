@@ -182,7 +182,7 @@ fun RationaleDescription() {
                     contentAlignment = Alignment.CenterStart, modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = item.description.toString(), style = TextStyle(
+                        text = item.description, style = TextStyle(
                             color = colorResource(R.color.font_color),
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Normal,

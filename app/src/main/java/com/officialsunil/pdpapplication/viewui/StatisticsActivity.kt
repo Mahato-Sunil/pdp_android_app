@@ -28,10 +28,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -48,7 +46,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -68,7 +65,6 @@ import com.officialsunil.pdpapplication.utils.firebase.FirebaseUserCredentials
 import com.officialsunil.pdpapplication.utils.firebase.ImageToBase64
 import com.officialsunil.pdpapplication.viewui.ui.theme.PDPApplicationTheme
 import kotlinx.coroutines.launch
-import okio.blackholeSink
 
 class StatisticsActivity : ComponentActivity() {
 
@@ -365,7 +361,6 @@ fun fetchDiseaseInformation(diseaseId: String): PredictionData? {
     // fetch the data from the firebase using coroutine scope
     val coroutineScope = rememberCoroutineScope()
     var diseaseData by remember { mutableStateOf<PredictionData?>(null) }
-    var isDataAvailable by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         coroutineScope.launch {
@@ -373,15 +368,11 @@ fun fetchDiseaseInformation(diseaseId: String): PredictionData? {
                 userId = FirebaseUserCredentials.getCurrentUserCredentails()?.uid.toString(),
                 diseaseId = diseaseId,
                 onError = {
-                    isDataAvailable = false
+                    Log.e("StatisticsActivity", "Error : $it")
                 })
 
-            if (data != null) {
+            if (data != null)
                 diseaseData = data
-                isDataAvailable = true
-            } else {
-                isDataAvailable = false
-            }
         }
     }
     return diseaseData

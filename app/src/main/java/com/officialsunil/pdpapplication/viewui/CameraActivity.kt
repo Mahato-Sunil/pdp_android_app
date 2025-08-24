@@ -50,12 +50,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.boundsInWindow
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.TextStyle
@@ -108,10 +105,9 @@ class CameraActivity : ComponentActivity() {
 
     //  take photo function
     private fun takePhoto(
-        controller: LifecycleCameraController,
-        onPhotoCapture: (Bitmap) -> Unit
+        controller: LifecycleCameraController, onPhotoCapture: (Bitmap) -> Unit
     ) {
-        val TAG = "CameraActivity"
+        val tag = "CameraActivity"
         controller.takePicture(
             ContextCompat.getMainExecutor(applicationContext),
             object : ImageCapture.OnImageCapturedCallback() {
@@ -158,12 +154,15 @@ class CameraActivity : ComponentActivity() {
                     val resizedBitmap =
                         croppedBitmap.scale(224, 224)   // scale the bitmap to 224 by 224 size
 
-                    Log.d(TAG, "box size(px): $boxSize")
-                    Log.d(TAG, "crop size (px): left=$cropLeft, top=$cropTop")
-                    Log.d(TAG, "safe crop size (px): top=$safeCropTop, left=$safeCropLeft")
-                    Log.d(TAG, "Crop rect (bitmap coords): left=$cropLeft, top=$cropTop")
-                    Log.d(TAG, "Croped bitmap (bitmap coords): left=$croppedBitmap")
-                    Log.d(TAG, "resized bitmap =$resizedBitmap")
+//                    val leafOnlyBitmap = resizedBitmap
+//                        LeafBackgroundRemover.removeBackground(resizedBitmap)
+
+                    Log.d(tag, "box size(px): $boxSize")
+                    Log.d(tag, "crop size (px): left=$cropLeft, top=$cropTop")
+                    Log.d(tag, "safe crop size (px): top=$safeCropTop, left=$safeCropLeft")
+                    Log.d(tag, "Crop rect (bitmap coords): left=$cropLeft, top=$cropTop")
+                    Log.d(tag, "Croped bitmap (bitmap coords): left=$croppedBitmap")
+                    Log.d(tag, "resized bitmap =$resizedBitmap")
 
 
                     onPhotoCapture(resizedBitmap)
@@ -210,8 +209,7 @@ class CameraActivity : ComponentActivity() {
 
         //get reference to the camera view model
         val cameraViewModel = viewModel<CameraViewModel>()
-        val bitmaps by cameraViewModel.bitmaps.collectAsState()
-
+        val bitmaps = cameraViewModel.bitmap.collectAsState().value
         val coroutineScope = rememberCoroutineScope()
         var showPrediction by remember { mutableStateOf(false) }
 
@@ -223,11 +221,10 @@ class CameraActivity : ComponentActivity() {
             classifications = classification
         )
 
+        // for real time camera feed
         var freezePrediction by remember { mutableStateOf<Classification?>(null) }
-
         if (showPrediction && freezePrediction == null) freezePrediction =
             classification.maxByOrNull { it.score }
-
         freezePrediction?.let { prediction ->
             ImagePreview(
                 bitmaps = bitmaps,
@@ -238,25 +235,21 @@ class CameraActivity : ComponentActivity() {
                     coroutineScope.launch {
                         freezePrediction = null
                         showPrediction = false
-                        cameraViewModel.clearBitmaps()
-
+                        cameraViewModel.clearBitmap()
                     }
-
                 },
                 onSave = { prediction ->
                     freezePrediction = null
                     showPrediction = false
-                    saveImageToCache(this@CameraActivity, bitmaps, prediction)
-
+                    bitmaps?.let {
+                        saveImageToCache(this@CameraActivity, it, prediction)
+                    }
                 },
-
                 coroutineScope = coroutineScope,
                 classification = prediction
             )
         }
     }
-//    }
-
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun CameraActivityUI(
@@ -265,7 +258,9 @@ class CameraActivity : ComponentActivity() {
         cameraViewModel: CameraViewModel,
         classifications: List<Classification>
     ) {
-     val context = LocalContext.current  // for camera controller
+        val context = LocalContext.current  // for camera controller
+        var flashModeState by remember { mutableStateOf("OFF") }
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -273,10 +268,9 @@ class CameraActivity : ComponentActivity() {
         ) {
             // call camera preview here
             CameraPreview(
-                controller = controller,
-                modifier = Modifier.fillMaxSize(),
-            )
-
+                    controller = controller,
+                    modifier = Modifier.fillMaxSize(),
+                )
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -315,7 +309,6 @@ class CameraActivity : ComponentActivity() {
                 }
 
                 //flash light icon
-                var flashModeState by remember { mutableStateOf("OFF") }
 
                 IconButton(
                     onClick = {
@@ -407,8 +400,7 @@ class CameraActivity : ComponentActivity() {
                 IconButton(
                     onClick = {
                         takePhoto(
-                            controller = controller,
-                            onPhotoCapture = cameraViewModel::onTakePhoto
+                            controller = controller, onPhotoCapture = cameraViewModel::onTakePhoto
                         )
                         showPrediction(true)
                     }) {

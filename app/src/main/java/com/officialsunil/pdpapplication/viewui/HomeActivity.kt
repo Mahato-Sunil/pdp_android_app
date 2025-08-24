@@ -2,11 +2,15 @@ package com.officialsunil.pdpapplication.viewui
 
 import android.app.Activity
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,31 +18,30 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.CameraEnhance
 import androidx.compose.material.icons.filled.House
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,30 +49,33 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.graphics.scale
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.officialsunil.pdpapplication.R
+import com.officialsunil.pdpapplication.tfLiteModule.ImagePreprocessing.uriToBitmap
+import com.officialsunil.pdpapplication.tfLiteModule.LiteRtClassifier
 import com.officialsunil.pdpapplication.ui.theme.PDPApplicationTheme
+import com.officialsunil.pdpapplication.utils.CameraViewModel
 import com.officialsunil.pdpapplication.utils.CustomDateTimeFormatter
-import com.officialsunil.pdpapplication.utils.firebase.FirebaseUserCredentials
 import com.officialsunil.pdpapplication.utils.NavigationUtils
 import com.officialsunil.pdpapplication.utils.RetrievePredictionData
 import com.officialsunil.pdpapplication.utils.firebase.FirebaseFirestoreUtils
+import com.officialsunil.pdpapplication.utils.firebase.FirebaseUserCredentials
 import com.officialsunil.pdpapplication.utils.firebase.ImageToBase64
 
 class HomeActivity : ComponentActivity() {
@@ -138,6 +144,50 @@ fun HomeHeadingUI() {
 @Composable
 fun HomeContainer() {
     val localContext = LocalContext.current
+    // fore image picker
+    val coroutineScope = rememberCoroutineScope()
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    val cameraViewModel = viewModel<CameraViewModel>()
+    val bitmaps = cameraViewModel.bitmap.collectAsState().value
+    val imagePickerPrediction = cameraViewModel.predictions.collectAsState()
+    val classifier = remember { LiteRtClassifier(context = localContext) }
+    val pickMedia = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        selectedImageUri = uri
+    }
+
+    // if the user picks the image from the galllery
+    // pass the selected image to the model
+    LaunchedEffect(selectedImageUri) {
+        selectedImageUri?.let { uri ->
+            val inputSize = 224
+            Log.d("ImagePicker", "Image Picked : Uri  = $uri")
+            val imageBitmap = uriToBitmap(localContext.contentResolver, uri)
+            imageBitmap?.let { bitmap ->
+                val scaledBitmap = bitmap.scale(inputSize, inputSize)
+                val results = classifier.getModelPrediction(bitmap, rotation = 0)
+                Log.d("ImagePicker", "Raw Prediction  :\n $results")
+                cameraViewModel.onTakePhoto(scaledBitmap)
+                cameraViewModel.onPrediction(results)
+            }
+        }
+    }
+
+    // showing the image preview
+    // for showing the camera preview using gallery picked image
+
+    selectedImageUri?.let { uri ->
+        imagePickerPrediction.value.maxByOrNull { it.score }
+            ?.let { prediction ->  // show only the top result
+                Log.d("ImagePicker", "Prediction : $prediction \n uri : $uri")
+                val pickImagePreviewIntent = Intent(localContext, CameraPreviewScreen::class.java)
+                pickImagePreviewIntent.putExtra("imageUri", uri.toString())
+                pickImagePreviewIntent.putExtra("predictedName", prediction.name)
+                pickImagePreviewIntent.putExtra("predictedScore", prediction.score)
+                localContext.startActivity(pickImagePreviewIntent)
+            }
+    }
 
     // declare variables
     var predictionData by remember { mutableStateOf<RetrievePredictionData?>(null) }
@@ -258,6 +308,74 @@ fun HomeContainer() {
                     imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
                     contentDescription = "See More Icon",
                     tint = colorResource(R.color.font_color)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // show the camera and gallery pick buttons
+        Column(
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+                .background(Color.White),
+        ) {
+            Button(
+                onClick = {
+                    // navigate to the camera activity
+                    NavigationUtils.navigate(localContext, "camera", true)
+
+                },
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(.8f)
+                    .height(60.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(Color(0xFF6DA0FF))
+            ) {
+                Text(
+                    text = "Open Camera", style = TextStyle(
+                        fontSize = 20.sp, fontWeight = FontWeight.W500, letterSpacing = 1.2.sp
+                    )
+                )
+                Spacer(Modifier.width(16.dp))
+                Image(
+                    imageVector = Icons.Default.CameraEnhance,
+                    contentDescription = "Camera Icon",
+                    modifier = Modifier.size(32.dp),
+                    colorFilter = ColorFilter.tint(Color.White)
+                )
+            }
+
+            Button(
+                onClick = {
+                    // launch the image picker
+                    pickMedia.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                    )
+                },
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(.8f)
+                    .height(60.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(Color(0xFF6DA0FF))
+            ) {
+                Text(
+                    text = "Open Gallery", style = TextStyle(
+                        fontSize = 20.sp, fontWeight = FontWeight.W500, letterSpacing = 1.2.sp
+                    )
+                )
+
+                Spacer(Modifier.width(16.dp))
+                Image(
+                    imageVector = Icons.Default.Photo,
+                    contentDescription = "Camera Icon",
+                    modifier = Modifier.size(32.dp),
+                    colorFilter = ColorFilter.tint(Color.White)
                 )
             }
         }

@@ -12,4 +12,5 @@
     <string name="title_activity_about">AboutActivity</string>
     <string name="title_activity_disease_analysis">DiseaseAnalysis</string>
     <string name="title_activity_prediction_test">PredictionTestActivity</string>
+    <string name="camera_preview_screen">Camera_preview_screen</string>
 </resources>

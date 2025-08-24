@@ -289,7 +289,7 @@ class MainActivity : ComponentActivity() {
 
             Button(
                 onClick = {
-                    initEmailPasswordSignin(emailInpt.toString(), passwordInpt.toString())
+                    initEmailPasswordSignin(emailInpt, passwordInpt)
                 },
                 colors = ButtonColors(
                     containerColor = Color(99, 206, 255, 255),

@@ -6,6 +6,8 @@ import android.content.Intent
 import com.officialsunil.pdpapplication.viewui.AboutActivity
 import com.officialsunil.pdpapplication.viewui.AccountCenterActivity
 import com.officialsunil.pdpapplication.viewui.CameraActivity
+import com.officialsunil.pdpapplication.viewui.CameraPreview
+import com.officialsunil.pdpapplication.viewui.CameraPreviewScreen
 import com.officialsunil.pdpapplication.viewui.DiagnosesListActivity
 import com.officialsunil.pdpapplication.viewui.DiseaseAnalysis
 import com.officialsunil.pdpapplication.viewui.GoogleSignInRationale

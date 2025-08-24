@@ -19,6 +19,7 @@ composeBom = "2025.04.00"   #2025.03.01
 datastorePreferencesCoreAndroid = "1.2.0-alpha02"
 lifecycleViewmodelCompose = "2.8.7"
 materialIconsExtended = "1.7.8"
+opencv = "4.5.3.0"
 
 [libraries]
 androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "cameraCore" }
@@ -53,6 +54,7 @@ androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-man
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-datastore-preferences-core-android = { group = "androidx.datastore", name = "datastore-preferences-core-android", version.ref = "datastorePreferencesCoreAndroid" }
+opencv = { module = "com.quickbirdstudios:opencv", version.ref = "opencv" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

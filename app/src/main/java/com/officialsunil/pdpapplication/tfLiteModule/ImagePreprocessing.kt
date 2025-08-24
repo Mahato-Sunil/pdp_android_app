@@ -1,13 +1,31 @@
 package com.officialsunil.pdpapplication.tfLiteModule
 
+import android.content.ContentResolver
 import android.graphics.Bitmap
+import android.graphics.ImageDecoder
 import android.graphics.Matrix
+import android.net.Uri
+import android.util.Log
 import androidx.core.graphics.scale
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 object ImagePreprocessing {
     //  pre-process the images bitmap
+//    convert the  image to bitmap
+    fun uriToBitmap(contentResolver: ContentResolver, uri: Uri): Bitmap? {
+        try {
+            val source = ImageDecoder.createSource(contentResolver, uri)
+            val bitmap = ImageDecoder.decodeBitmap(source) { decoder, _, _ ->
+                decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE)
+            }
+            return bitmap
+        } catch (exception: Exception) {
+            Log.e("ImagePreprocessing", "Error converting image to bitmap:\n $exception")
+            return null
+        }
+    }
+
     // rotate the bitmap
     fun getRotatedBitmap(bitmap: Bitmap, rotation: Int): Bitmap {
         val matrix = Matrix()

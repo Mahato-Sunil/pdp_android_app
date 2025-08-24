@@ -1,5 +1,5 @@
 /*
-    This class contains the  definition for the chart data class, getter methtods to  populate the charts data
+    This class contains the  definition for the chart data class, getter methods to  populate the charts data
 
  */
 package com.officialsunil.pdpapplication.utils.customchart
@@ -110,7 +110,7 @@ suspend fun getCompletePredictionSummary(): List<PredictionSummary> {
     val summaryList = groupedCounts.map { (label, count) ->
         val percentage = (count / total) * 100
         PredictionSummary(
-            label = label, score = percentage.toFloat()
+            label = label, score = percentage
         )
     }
 
