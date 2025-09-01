@@ -67,6 +67,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.scale
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.officialsunil.pdpapplication.R
+import com.officialsunil.pdpapplication.tfLiteModule.LeafBackgroundRemover
 import com.officialsunil.pdpapplication.tfLiteModule.LiteRtClassifier
 import com.officialsunil.pdpapplication.tfLiteModule.TFLiteModelAnalyzer
 import com.officialsunil.pdpapplication.ui.theme.PDPApplicationTheme
@@ -154,8 +155,9 @@ class CameraActivity : ComponentActivity() {
                     val resizedBitmap =
                         croppedBitmap.scale(224, 224)   // scale the bitmap to 224 by 224 size
 
-//                    val leafOnlyBitmap = resizedBitmap
-//                        LeafBackgroundRemover.removeBackground(resizedBitmap)
+                    // add the logic to remove the bitmap
+                    val leafOnlyBitmap = resizedBitmap
+                        LeafBackgroundRemover.removeBackground(resizedBitmap)
 
                     Log.d(tag, "box size(px): $boxSize")
                     Log.d(tag, "crop size (px): left=$cropLeft, top=$cropTop")
@@ -165,8 +167,10 @@ class CameraActivity : ComponentActivity() {
                     Log.d(tag, "resized bitmap =$resizedBitmap")
 
 
-                    onPhotoCapture(resizedBitmap)
+//                    onPhotoCapture(resizedBitmap)
+                    onPhotoCapture(leafOnlyBitmap)
                     image.close()
+
                 }
 
                 override fun onError(exception: ImageCaptureException) {

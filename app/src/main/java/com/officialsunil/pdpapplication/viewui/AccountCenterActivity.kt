@@ -73,6 +73,9 @@ import com.officialsunil.pdpapplication.utils.firebase.FirebaseUserCredentials
 import com.officialsunil.pdpapplication.utils.NavigationUtils
 import com.officialsunil.pdpapplication.utils.ProfileInformation
 import com.officialsunil.pdpapplication.utils.UserProfileSettings
+import com.officialsunil.pdpapplication.utils.firebase.FirebaseUserCredentials.deleteCurrentUser
+import com.officialsunil.pdpapplication.utils.firebase.FirebaseUserCredentials.reauthenticateAndDelete
+import com.officialsunil.pdpapplication.utils.firebase.ReAuth.ReauthenticateDialog
 import com.officialsunil.pdpapplication.viewui.ui.theme.PDPApplicationTheme
 
 class AccountCenterActivity : ComponentActivity() {
@@ -353,6 +356,34 @@ fun AccountInformationContainer(context: Context) {
 fun ProfileSettingsUI() {
     val context = LocalContext.current
 
+    // deletion and re authentication
+    var showReAuthDialog by remember { mutableStateOf(false) }
+    val email = FirebaseUserCredentials.getCurrentUserCredentails()?.email.toString()
+
+    // deleteing the user
+    val onDeleteAccount: () -> Unit = {
+        deleteCurrentUser(
+            context = context,
+            email = email,
+            password = "",
+            onReauthRequired = { showReAuthDialog = true }
+        )
+    }
+
+    if (showReAuthDialog) {
+        ReauthenticateDialog(
+            email = email,
+            onConfirm = { password ->
+                showReAuthDialog = false
+                reauthenticateAndDelete(context, email, password)
+            },
+            onDismiss = { showReAuthDialog = false }
+        )
+    }
+
+    /*
+        normal logic
+     */
     HorizontalDivider(
         thickness = 1.dp, color = Color.LightGray, modifier = Modifier.padding(vertical = 10.dp)
 
@@ -372,6 +403,7 @@ fun ProfileSettingsUI() {
                         "analysis" -> NavigationUtils.navigate(context, "analysis")
                         "logout" -> EmailAuthUtils.signOut(context)
                         "about" -> NavigationUtils.navigate(context, "about")
+                        "delete" -> onDeleteAccount()
                         else -> ""
                     }
                 }) {
@@ -421,6 +453,7 @@ fun getSettingItems(): List<UserProfileSettings> {
     return listOf(
         UserProfileSettings("Analysis ", "analysis"),
         UserProfileSettings("About Developer", "about"),
-        UserProfileSettings("Log Out", "logout")
+        UserProfileSettings("Log Out", "logout"),
+        UserProfileSettings("Delete Account", "delete")
     )
 }

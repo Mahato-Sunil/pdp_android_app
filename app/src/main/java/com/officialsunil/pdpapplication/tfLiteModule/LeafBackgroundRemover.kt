@@ -1,6 +1,7 @@
 package com.officialsunil.pdpapplication.tfLiteModule
 
 import android.graphics.Bitmap
+import android.util.Log
 import org.opencv.android.Utils
 import org.opencv.core.*
 import org.opencv.imgproc.Imgproc
@@ -117,9 +118,21 @@ object LeafBackgroundRemover {
     private fun refineWithGrabCut(original: Mat, mask: Mat): Mat {
         val bgdModel = Mat()
         val fgdModel = Mat()
-        val rect = Rect(10, 10, original.cols() - 20, original.rows() - 20) // ROI around leaf
+        val rect = Rect(10, 10, original.cols() - 20, original.rows() - 20)
 
-        val grabCutMask = Mat()
+        // GrabCut requires 8UC1 mask initialized
+        val grabCutMask = Mat(original.size(), CvType.CV_8UC1, Scalar(Imgproc.GC_PR_BGD.toDouble()))
+
+        // If you already have a rough mask, use it
+        if (!mask.empty()) {
+            mask.copyTo(grabCutMask)
+        }
+
+        if (original.type() != CvType.CV_8UC3) {
+            Imgproc.cvtColor(original, original, Imgproc.COLOR_RGBA2RGB)
+        }
+
+        // Run GrabCut
         Imgproc.grabCut(
             original,
             grabCutMask,
@@ -130,24 +143,46 @@ object LeafBackgroundRemover {
             Imgproc.GC_INIT_WITH_RECT
         )
 
-        // Refine mask: Keep probable/foreground pixels
-        val refinedMask = Mat.zeros(mask.size(), CvType.CV_8UC1)
-        Core.compare(grabCutMask, Scalar(Imgproc.GC_FGD.toDouble()), refinedMask, Core.CMP_EQ)
-        Core.compare(grabCutMask, Scalar(Imgproc.GC_PR_FGD.toDouble()), refinedMask, Core.CMP_EQ)
+        // Convert grabCutMask into binary mask
+        val foregroundMask = Mat(grabCutMask.size(), CvType.CV_8UC1)
+        Core.inRange(
+            grabCutMask,
+            Scalar(Imgproc.GC_PR_FGD.toDouble()),
+            Scalar(Imgproc.GC_FGD.toDouble()),
+            foregroundMask
+        )
 
-        return refinedMask
+        return foregroundMask
     }
 
     /** Main function: Background removal pipeline */
     fun removeBackground(original: Bitmap): Bitmap {
         val src = bitmapToMat(original)
-        val mask = extractLeafMask(src)
+        val roughMask = extractLeafMask(src)
 
-        // Optional: Uncomment to use GrabCut for complex cases
-//         val refinedMask = refineWithGrabCut(src, mask)
-//         val resultMat = applyMask(src, refinedMask)
+        // Refine with GrabCut
+        val refinedMask = refineWithGrabCut(src, roughMask)
 
-        val resultMat = applyMask(src, mask)
+        // Apply mask
+        val resultMat = applyMask(src, refinedMask)
         return matToBitmap(resultMat)
     }
+
+    //     function to log the type of bitmap being sent to the model
+    fun logMatType(mat: Mat) {
+        val depth = mat.depth()
+        val channels = mat.channels()
+        val depthString = when (depth) {
+            CvType.CV_8U -> "CV_8U"
+            CvType.CV_8S -> "CV_8S"
+            CvType.CV_16U -> "CV_16U"
+            CvType.CV_16S -> "CV_16S"
+            CvType.CV_32S -> "CV_32S"
+            CvType.CV_32F -> "CV_32F"
+            CvType.CV_64F -> "CV_64F"
+            else -> "Unknown"
+        }
+        Log.d("MatInfo", "Type: $depthString, Channels: $channels, Size: ${mat.size()}")
+    }
+
 }

@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -111,9 +112,10 @@ class PredictionActivity : ComponentActivity() {
             )
 
             // cloud icon to save prediction to firebase
-            IconButton(onClick = {
-                initiateUpload(context)
-            }) {
+            IconButton(
+                onClick = {
+                    initiateUpload(context)
+                }) {
                 val icon =
                     if (isAlreadyUploaded.value) Icons.Default.CloudDone else Icons.Default.CloudOff
                 Icon(
@@ -194,11 +196,67 @@ class PredictionActivity : ComponentActivity() {
 
     @Composable
     fun PredictionDescriptionContainer() {
+        val context = LocalContext.current
         val predictionDescription = getPredictionDetails(predictedDiseaseName)
-        PredictionDescriptions("Description", predictionDescription.diseaseDescription)
-        PredictionDescriptions("Cause", predictionDescription.diseaseCause)
-        PredictionDescriptions("Symptoms", predictionDescription.diseaseSymptoms)
-        PredictionDescriptions("Treatment", predictionDescription.diseaseTreatment)
+
+        if (!FirebaseUserCredentials.checkCurrentlySignedInUser()) {
+            Card(
+                shape = RoundedCornerShape(10.dp),
+                border = BorderStroke(1.dp, Color.LightGray),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.Transparent,
+                    contentColor = colorResource(R.color.font_color)
+                ),
+                modifier = Modifier
+                    .fillMaxWidth(.95f)
+                    .padding(2.dp)
+            ) {
+                Column(
+                    Modifier
+                        .padding(8.dp)
+                        .fillMaxWidth()
+                ) {
+                    Text(
+                        "Please sign in to save your prediction",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        style = TextStyle(letterSpacing = 1.2.sp),
+                        modifier = Modifier
+                            .padding(start = 32.dp, end = 16.dp, bottom = 12.dp, top = 16.dp)
+                            .fillMaxWidth(),
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(Modifier.height(50.dp))
+
+                    OutlinedButton(
+                        shape = RoundedCornerShape(16.dp), colors = ButtonColors(
+                            containerColor = Color.Transparent,
+                            contentColor = colorResource(R.color.font_color),
+                            disabledContentColor = Color.Gray,
+                            disabledContainerColor = Color.LightGray
+                        ), onClick = {
+                            NavigationUtils.navigate(context, "register")
+                        }, modifier = Modifier
+                            .fillMaxWidth(.8f)
+                            .height(50.dp)
+                            .align(Alignment.CenterHorizontally)
+                    ) {
+                        Text(
+                            text = "Sign In Now"
+                        )
+                    }
+
+                    Spacer(Modifier.height(25.dp))
+
+                }
+            }
+        } else {
+            PredictionDescriptions("Description", predictionDescription.diseaseDescription)
+            PredictionDescriptions("Cause", predictionDescription.diseaseCause)
+            PredictionDescriptions("Symptoms", predictionDescription.diseaseSymptoms)
+            PredictionDescriptions("Treatment", predictionDescription.diseaseTreatment)
+        }
     }
 
     @Composable
@@ -257,6 +315,13 @@ class PredictionActivity : ComponentActivity() {
     }
 
     private fun initiateUpload(context: Context) {
+        // no user
+        if (!FirebaseUserCredentials.checkCurrentlySignedInUser()) {
+            Toast.makeText(context, "Please sign in to Save your Prediction", Toast.LENGTH_LONG)
+                .show()
+            return
+        }
+
         if (isAlreadyUploaded.value) {
             Toast.makeText(context, "Data Already uploaded", Toast.LENGTH_SHORT).show()
             return
@@ -274,7 +339,7 @@ class PredictionActivity : ComponentActivity() {
         val randomDiseaseId = Base64.getUrlEncoder().withoutPadding().encodeToString(byteArray)
 
         Log.d("Disease ID", "$randomDiseaseId")
-        
+
         val predictionData = PredictionData(
             userId = userId,
             diseaseId = randomDiseaseId,

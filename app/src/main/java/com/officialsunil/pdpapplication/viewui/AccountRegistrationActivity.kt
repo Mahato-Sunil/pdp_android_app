@@ -48,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -85,7 +86,8 @@ class AccountRegistrationActivity : ComponentActivity() {
                     launcher = googleSignInLauncher,
                     googleLogin = {
                         Log.d("Account Register", "Account Registration Successful")
-                        Toast.makeText(this, "Successfully Authenticated", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Successfully Authenticated", Toast.LENGTH_SHORT)
+                            .show()
                         NavigationUtils.navigate(this, "home", true)
                     }
                 )
@@ -247,7 +249,16 @@ fun FormContentUI(
                 modifier = Modifier
                     .fillMaxWidth(.95f)
                     .padding(1.dp)
-                    .height(50.dp),
+                    .height(50.dp)
+                    .testTag(
+                        when (key) {
+                            "name" -> "nameField"
+                            "email" -> "emailField"
+                            "password" -> "passwordField"
+                            "confirmpassword" -> "confirmPasswordField"
+                            else -> ""
+                        }
+                    ),
                 singleLine = true,
                 textStyle = TextStyle(
                     fontSize = 12.sp, fontWeight = FontWeight.Normal, letterSpacing = 1.2.sp
@@ -333,6 +344,7 @@ fun FormContentUI(
                 .fillMaxWidth(.8f)
                 .height(45.dp)
                 .align(Alignment.CenterHorizontally)
+                .testTag("signUpButton")
         ) {
             Text(
 

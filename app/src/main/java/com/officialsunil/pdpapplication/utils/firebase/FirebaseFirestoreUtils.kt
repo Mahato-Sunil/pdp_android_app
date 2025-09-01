@@ -79,9 +79,12 @@ object FirebaseFirestoreUtils {
         return try {
             // Fetch User Info (Single Document)
             val predictionSnapshot =
-                fireDb.collection(DBNAME).document(userId).collection("Predictions")
+                fireDb.collection(DBNAME)
+                    .document(userId)
+                    .collection("Predictions")
                     .orderBy("timestamp", Query.Direction.DESCENDING) // Sort latest first
-                    .get().await()
+                    .get()
+                    .await()
 
             //check for the existence of the user data
             val retrievePredictionData = predictionSnapshot.documents.mapNotNull { doc ->

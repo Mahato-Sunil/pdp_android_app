@@ -35,15 +35,15 @@ class CameraViewModel : ViewModel() {
         _predictions.value = emptyList()
     }
 
-    // separating the camera and gallery mode
-    enum class InputMode { CAMERA, GALLERY }
-
-    private val _inputMode = MutableStateFlow(InputMode.CAMERA)
-    val inputMode = _inputMode.asStateFlow()
-
-    fun setInputMode(mode: InputMode) {
-        _inputMode.value = mode
-    }
+//    // separating the camera and gallery mode
+//    enum class InputMode { CAMERA, GALLERY }
+//
+//    private val _inputMode = MutableStateFlow(InputMode.CAMERA)
+//    val inputMode = _inputMode.asStateFlow()
+//
+//    fun setInputMode(mode: InputMode) {
+//        _inputMode.value = mode
+//    }
 }
 
 

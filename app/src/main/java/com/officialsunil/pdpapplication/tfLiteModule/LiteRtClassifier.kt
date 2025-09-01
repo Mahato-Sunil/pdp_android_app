@@ -19,6 +19,7 @@ import android.util.Log
 import androidx.core.graphics.get
 import com.officialsunil.pdpapplication.tfLiteModule.ImagePreprocessing.getImageByteBuffer
 import com.officialsunil.pdpapplication.tfLiteModule.ImagePreprocessing.getRotatedBitmap
+import com.officialsunil.pdpapplication.tfLiteModule.LeafBackgroundRemover.removeBackground
 import com.officialsunil.pdpapplication.utils.Classification
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.gpu.GpuDelegate
@@ -57,7 +58,12 @@ class LiteRtClassifier(
     // function to run the inference and return the result
     internal fun classify(bitmap: Bitmap, rotation: Int = 0): FloatArray {
         val rotatedBitmap = getRotatedBitmap(bitmap, rotation)
+
+        // apply background removal in run time
+//        val removedBitmap = removeBackground(rotatedBitmap)
+
         val byteBuffer = getImageByteBuffer(rotatedBitmap, inputSize)
+//        val byteBuffer = getImageByteBuffer(removedBitmap, inputSize)
 
         // ✅ Log model input tensor details
         interpreter?.getInputTensor(0)?.let {

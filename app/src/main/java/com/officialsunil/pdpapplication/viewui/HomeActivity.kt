@@ -45,7 +45,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,6 +53,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -101,6 +101,7 @@ fun InitHomeActivityUI() {
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
+                .testTag("homeScreen")
         ) {
             HomeContainer()
         }
@@ -145,11 +146,9 @@ fun HomeHeadingUI() {
 fun HomeContainer() {
     val localContext = LocalContext.current
     // fore image picker
-    val coroutineScope = rememberCoroutineScope()
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     val cameraViewModel = viewModel<CameraViewModel>()
-    val bitmaps = cameraViewModel.bitmap.collectAsState().value
-    val imagePickerPrediction = cameraViewModel.predictions.collectAsState()
+     val imagePickerPrediction = cameraViewModel.predictions.collectAsState()
     val classifier = remember { LiteRtClassifier(context = localContext) }
     val pickMedia = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia()
@@ -413,7 +412,7 @@ fun NoDataRationale(
         ) {
             Text(
                 text = "Make Predictions", style = TextStyle(
-                    fontSize = 20.sp, fontWeight = FontWeight.W500, letterSpacing = 1.2.sp
+                    fontSize = 16.sp, fontWeight = FontWeight.W400, letterSpacing = 1.1.sp
                 )
             )
         }
