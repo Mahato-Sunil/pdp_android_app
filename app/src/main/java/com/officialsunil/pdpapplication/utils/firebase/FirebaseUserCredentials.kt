@@ -58,15 +58,11 @@ object FirebaseUserCredentials {
 
     // function to delete the current logged in user
     fun deleteCurrentUser(
-        context: Context,
-        email: String,
-        password: String,
-        onReauthRequired: () -> Unit
+        context: Context, email: String, password: String, onReauthRequired: () -> Unit
     ) {
         val currentUser = FirebaseAuth.getInstance().currentUser ?: return
 
-        currentUser.delete()
-            .addOnCompleteListener { task ->
+        currentUser.delete().addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     Log.d("DeleteAccount", "User account deleted.")
                     FirebaseAuth.getInstance().signOut()
@@ -95,8 +91,7 @@ object FirebaseUserCredentials {
         val currentUser = FirebaseAuth.getInstance().currentUser ?: return
         val credential = EmailAuthProvider.getCredential(email, password)
 
-        currentUser.reauthenticate(credential)
-            .addOnCompleteListener { reauthTask ->
+        currentUser.reauthenticate(credential).addOnCompleteListener { reauthTask ->
                 if (reauthTask.isSuccessful) {
                     Log.d("DeleteAccount", "Re-authenticated successfully")
                     deleteCurrentUser(context, email, password) { }
@@ -108,6 +103,14 @@ object FirebaseUserCredentials {
                     )
                 }
             }
+    }
+
+    // function to check if user is admin or not
+    fun isAdmin() : Boolean {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        val adminUID = "VDWI0gBlMNYLFn5SRCr5MmCIlu63"
+        val currentUserUID = currentUser?.uid
+        return currentUserUID == adminUID
     }
 
 }

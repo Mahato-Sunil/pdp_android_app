@@ -3,6 +3,8 @@ package com.officialsunil.pdpapplication.utils
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import com.officialsunil.pdpapplication.admin.screen.AdminHome
+import com.officialsunil.pdpapplication.admin.screen.AdminLoginScreen
 import com.officialsunil.pdpapplication.viewui.AboutActivity
 import com.officialsunil.pdpapplication.viewui.AccountCenterActivity
 import com.officialsunil.pdpapplication.viewui.CameraActivity
@@ -15,6 +17,7 @@ import com.officialsunil.pdpapplication.viewui.HomeActivity
 import com.officialsunil.pdpapplication.viewui.MainActivity
 import com.officialsunil.pdpapplication.viewui.PredictionActivity
 import com.officialsunil.pdpapplication.viewui.StatisticsActivity
+import kotlin.jvm.java
 
 object NavigationUtils {
     fun navigate(
@@ -31,6 +34,8 @@ object NavigationUtils {
             "prediction" -> Intent(context, PredictionActivity::class.java)
             "signinRationale" -> Intent(context, GoogleSignInRationale::class.java)
             "analysis" -> Intent(context, DiseaseAnalysis::class.java)
+            "adminLogin" -> Intent(context, AdminLoginScreen::class.java)
+            "adminHome" -> Intent(context, AdminHome::class.java)
             else -> Intent(context, HomeActivity::class.java)
         }
         if (data.isNotEmpty()) {

@@ -36,6 +36,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -64,6 +65,7 @@ import com.officialsunil.pdpapplication.ui.theme.PDPApplicationTheme
 import com.officialsunil.pdpapplication.utils.NavigationUtils
 import com.officialsunil.pdpapplication.utils.SplashScreenUtils
 import com.officialsunil.pdpapplication.utils.firebase.EmailAuthUtils
+import com.officialsunil.pdpapplication.utils.firebase.FirebaseUserCredentials.isAdmin
 import com.officialsunil.pdpapplication.utils.firebase.GoogleAuthUtils
 
 class MainActivity : ComponentActivity() {
@@ -82,7 +84,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             PDPApplicationTheme {
                 if (isUserLoggedIn()) {
-                    NavigationUtils.navigate(this, "home", true)
+                    // check for admin or current user
+                    Log.d("Admin", "Admin : ${isAdmin()}")
+                    if (isAdmin())
+
+                        NavigationUtils.navigate(this, "adminHome", true)
+                    else NavigationUtils.navigate(this, "home", true)
                 } else {
                     InitMainActivityUI(
                         context = this,
@@ -100,17 +107,16 @@ class MainActivity : ComponentActivity() {
 
     // backend logics
     private fun initEmailPasswordSignin(email: String, password: String) {
-        EmailAuthUtils.loginWithEmail(
-            email = email,
-            password = password,
-            onSuccess = { user ->
-                Toast.makeText(this, "Authentication Successfull", Toast.LENGTH_SHORT).show()
-                NavigationUtils.navigate(this, "home", true)
-            },
-            onFailure = { exception ->
-                Toast.makeText(this, "Please Enter Correct Credentials", Toast.LENGTH_SHORT).show()
-                Log.e("Auth", "Failed to login", exception)
-            })
+        val adminMail = "sunil@admin.com"
+        if (email == adminMail) Toast.makeText(this, "Invalid Credentials", Toast.LENGTH_LONG)
+            .show()
+        else EmailAuthUtils.loginWithEmail(email = email, password = password, onSuccess = { user ->
+            Toast.makeText(this, "Authentication Successfull", Toast.LENGTH_SHORT).show()
+            NavigationUtils.navigate(this, "home", true)
+        }, onFailure = { exception ->
+            Toast.makeText(this, "Please Enter Correct Credentials", Toast.LENGTH_SHORT).show()
+            Log.e("Auth", "Failed to login", exception)
+        })
     }
 
     private val googleSignInLauncher =
@@ -224,26 +230,26 @@ class MainActivity : ComponentActivity() {
             // custom email and password login
             OutlinedTextField(
                 value = emailInpt, onValueChange = {
-                    emailInpt = it
-                    isChanged = true
-                }, modifier = Modifier.fillMaxWidth(.95f), singleLine = true, textStyle = TextStyle(
-                    fontSize = 14.sp, fontWeight = FontWeight.Normal, letterSpacing = 1.2.sp
-                ), placeholder = {
-                    Text(
-                        text = "Email",
-                        color = Color.Gray,
-                    )
-                }, trailingIcon = {
-                    if (isChanged) IconButton(
-                        onClick = { emailInpt = "" }) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "close icon",
-                        )
-                    }
-                }, shape = RoundedCornerShape(20.dp), keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Email, imeAction = ImeAction.Next
+                emailInpt = it
+                isChanged = true
+            }, modifier = Modifier.fillMaxWidth(.95f), singleLine = true, textStyle = TextStyle(
+                fontSize = 14.sp, fontWeight = FontWeight.Normal, letterSpacing = 1.2.sp
+            ), placeholder = {
+                Text(
+                    text = "Email",
+                    color = Color.Gray,
                 )
+            }, trailingIcon = {
+                if (isChanged) IconButton(
+                    onClick = { emailInpt = "" }) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "close icon",
+                    )
+                }
+            }, shape = RoundedCornerShape(20.dp), keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Email, imeAction = ImeAction.Next
+            )
             )
 
             Spacer(Modifier.height(10.dp))
@@ -404,7 +410,7 @@ class MainActivity : ComponentActivity() {
                     NavigationUtils.navigate(context, "signinRationale", true)
                 },
                 colors = ButtonColors(
-                    containerColor =Color.White,
+                    containerColor = Color.White,
                     contentColor = colorResource(id = R.color.font_color),
                     disabledContainerColor = Color(0xFFD8D8D8),
                     disabledContentColor = Color(0xFF575757)
@@ -448,6 +454,15 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
+            Spacer(Modifier.height(32.dp))
+
+            TextButton(
+                onClick = {
+                    NavigationUtils.navigate(context, "adminLogin")
+                    Log.d("Admin", "Button in Main Activity Clicked")
+                }) {
+                Text("Admin Login")
+            }
         }
     }
 }

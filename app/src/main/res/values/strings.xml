@@ -13,4 +13,6 @@
     <string name="title_activity_disease_analysis">DiseaseAnalysis</string>
     <string name="title_activity_prediction_test">PredictionTestActivity</string>
     <string name="camera_preview_screen">Camera_preview_screen</string>
+    <string name="title_activity_admin_login_screen">AdminLoginScreen</string>
+    <string name="title_activity_admin_home">AdminHome</string>
 </resources>

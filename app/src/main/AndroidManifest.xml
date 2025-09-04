@@ -21,13 +21,21 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.PdpApplication.CustomSplashScreen"
         tools:targetApi="31">
-
+        <activity
+            android:name=".admin.screen.AdminHome"
+            android:exported="false"
+            android:label="@string/title_activity_admin_home"
+            android:theme="@style/Theme.PdpApplication.CustomSplashScreen" />
+        <activity
+            android:name=".admin.screen.AdminLoginScreen"
+            android:exported="true"
+            android:label="@string/title_activity_admin_login_screen"
+            android:theme="@style/Theme.PdpApplication.CustomSplashScreen" />
         <activity
             android:name=".viewui.CameraPreviewScreen"
             android:exported="true"
             android:label="@string/camera_preview_screen"
             android:theme="@style/Theme.PdpApplication.CustomSplashScreen" />
-
         <activity
             android:name=".viewui.DiseaseAnalysis"
             android:exported="false"
