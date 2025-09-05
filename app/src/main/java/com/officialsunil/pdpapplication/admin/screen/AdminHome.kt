@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -34,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import com.officialsunil.pdpapplication.admin.screen.ui.theme.PDPApplicationTheme
+import com.officialsunil.pdpapplication.utils.NavigationUtils
 
 class AdminHome : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,8 +46,13 @@ class AdminHome : ComponentActivity() {
                 AdminDashboardScreen(
                     totalUsers = 21,
                     totalPredictions = 123,
-                    onDiseaseDetailsClick = {},
-                    onSettingsClick = {}
+                    onDiseaseDetailsClick = {
+                        // navigate to the diseae details section
+                        NavigationUtils.navigate(this@AdminHome, "adminCase")
+                    },
+                    onSettingsClick = {
+                        NavigationUtils.navigate(this@AdminHome, "adminSettings")
+                    }
                 )
             }
         }
@@ -130,22 +137,31 @@ fun AdminDashboardScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(36.dp))
+
+            HorizontalDivider(
+                thickness = 2.dp
+            )
+            Spacer(modifier = Modifier.height(36.dp))
 
             // ===== Navigation Section =====
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .padding(16.dp)
+                ,
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 AnimatedDashboardItem(
-                    title = "Disease Details",
-                    description = "View and manage disease related data",
+                    title = "Cases",
                     icon = Icons.Default.Info,
                     onClick = onDiseaseDetailsClick
                 )
                 AnimatedDashboardItem(
                     title = "Settings",
-                    description = "Configure system preferences",
                     icon = Icons.Default.Settings,
                     onClick = onSettingsClick
                 )
@@ -170,15 +186,15 @@ fun SummaryCard(title: String, value: String) {
 
     Card(
         modifier = Modifier
-//            .padding(4.dp)
-            .graphicsLayer { this.alpha = alpha },
+            .graphicsLayer { this.alpha = alpha }
+            .width(150.dp), // Fixed width for uniform card
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Column(
             modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(.4f),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
             Text(text = title, style = MaterialTheme.typography.bodyMedium)
             Spacer(modifier = Modifier.height(8.dp))
@@ -195,7 +211,6 @@ fun SummaryCard(title: String, value: String) {
 @Composable
 fun AnimatedDashboardItem(
     title: String,
-    description: String,
     icon: ImageVector,
     onClick: () -> Unit
 ) {
@@ -209,7 +224,7 @@ fun AnimatedDashboardItem(
 
     Card(
         modifier = Modifier
-            .fillMaxWidth()
+            .size(120.dp)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
@@ -225,11 +240,11 @@ fun AnimatedDashboardItem(
         elevation = CardDefaults.cardElevation(6.dp),
         shape = MaterialTheme.shapes.medium
     ) {
-        Row(
+        Column (
             modifier = Modifier
                 .padding(16.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
                 imageVector = icon,
@@ -237,29 +252,10 @@ fun AnimatedDashboardItem(
                 modifier = Modifier.size(32.dp),
                 tint = MaterialTheme.colorScheme.primary
             )
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             Column {
                 Text(text = title, style = MaterialTheme.typography.titleMedium)
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
         }
     }
 }
-
-// preview
-@Composable
-@Preview(showBackground = true, showSystemUi = true)
-fun showAdminPreview() {
-    AdminDashboardScreen(
-        totalUsers = 21,
-        totalPredictions = 123,
-        onDiseaseDetailsClick = {},
-        onSettingsClick = {}
-    )
-}
-
-// random changes

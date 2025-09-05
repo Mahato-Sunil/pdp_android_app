@@ -15,4 +15,7 @@
     <string name="camera_preview_screen">Camera_preview_screen</string>
     <string name="title_activity_admin_login_screen">AdminLoginScreen</string>
     <string name="title_activity_admin_home">AdminHome</string>
+    <string name="title_activity_admin_cases_screen">AdminCasesScreen</string>
+    <string name="title_activity_admin_setting_screen">AdminSettingScreen</string>
+    <string name="title_activity_admin_add_disease">AdminAddDisease</string>
 </resources>

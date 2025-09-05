@@ -139,7 +139,7 @@ fun DiagnosesContainer(
                 )
             })
         } else {
-            DiagnosesList(predictionData, onItemClicked = { dataToPass ->
+            DiseaseList(predictionData, onItemClicked = { dataToPass ->
                 // pass the disease id
                 NavigationUtils.navigate(
                     context = context, destination = "statistics", data = dataToPass
@@ -220,7 +220,7 @@ fun DiagnosesHeadingUI(context: Context) {
 
 // composable function to show the diagnoses list
 @Composable
-fun DiagnosesList(
+fun DiseaseList(
     predictionData: RetrievePredictionData?, onItemClicked: (String) -> Unit
 ) {
     Column(

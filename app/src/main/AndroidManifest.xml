@@ -22,6 +22,21 @@
         android:theme="@style/Theme.PdpApplication.CustomSplashScreen"
         tools:targetApi="31">
         <activity
+            android:name=".admin.screen.AdminAddDisease"
+            android:exported="false"
+            android:label="@string/title_activity_admin_add_disease"
+            android:theme="@style/Theme.PdpApplication.CustomSplashScreen" />
+        <activity
+            android:name=".admin.screen.AdminSettingScreen"
+            android:exported="false"
+            android:label="@string/title_activity_admin_setting_screen"
+            android:theme="@style/Theme.PdpApplication.CustomSplashScreen" />
+        <activity
+            android:name=".admin.screen.AdminCasesScreen"
+            android:exported="false"
+            android:label="@string/title_activity_admin_cases_screen"
+            android:theme="@style/Theme.PdpApplication.CustomSplashScreen" />
+        <activity
             android:name=".admin.screen.AdminHome"
             android:exported="false"
             android:label="@string/title_activity_admin_home"
