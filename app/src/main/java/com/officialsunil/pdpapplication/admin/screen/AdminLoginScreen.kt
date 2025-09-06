@@ -33,25 +33,32 @@ class AdminLoginScreen : ComponentActivity() {
             PDPApplicationTheme {
                 AdminLoginScreen(
                     onLoginClick = { email, password ->
-                        EmailAuthUtils.loginWithEmail(
-                            email = email,
-                            password = password,
-                            onSuccess = { user ->
-                                Toast.makeText(
-                                    this,
-                                    "Authentication Successfull",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                                NavigationUtils.navigate(this, "adminHome", true)
-                            },
-                            onFailure = { exception ->
-                                Toast.makeText(
-                                    this,
-                                    "Please Enter Correct Credentials",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                                Log.e("Auth", "Failed to login", exception)
-                            })
+                        if (email.equals("sunil@admin.com") && password.equals("Admin@1234"))
+                            EmailAuthUtils.loginWithEmail(
+                                email = email,
+                                password = password,
+                                onSuccess = { user ->
+                                    Toast.makeText(
+                                        this,
+                                        "Authentication Successfull",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    NavigationUtils.navigate(this, "adminHome", true)
+                                },
+                                onFailure = { exception ->
+                                    Toast.makeText(
+                                        this,
+                                        "Please Enter Correct Credentials",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    Log.e("Auth", "Failed to login", exception)
+                                })
+                        else
+                            Toast.makeText(
+                                this,
+                                "Please Enter Correct Credentials",
+                                Toast.LENGTH_SHORT
+                            ).show()
                     },
                     onBackClick = {
                         NavigationUtils.navigate(

@@ -82,7 +82,6 @@ fun AdminCasesScreenUI() {
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
                 .background(Color.White)
         ) {
             AdminContainerUI(
