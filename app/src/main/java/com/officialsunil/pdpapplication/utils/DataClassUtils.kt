@@ -67,9 +67,9 @@ data class DiseaseInformation(
     val diseaseTreatment: String
 )
 
-data class RetrieveDiseaseInformation(
-    val retrieveDiseaseInformation: List<RetrieveDiseaseInformation>
-)
+//data class RetrieveDiseaseInformation(
+//    val retrieveDiseaseInformation: List<RetrieveDiseaseInformation>
+//)
 
 // data class for classification result
 data class Classification (

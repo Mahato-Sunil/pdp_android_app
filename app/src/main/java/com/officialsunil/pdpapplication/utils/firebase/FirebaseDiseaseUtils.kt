@@ -5,7 +5,6 @@ import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.officialsunil.pdpapplication.utils.DiseaseInformation
-import com.officialsunil.pdpapplication.utils.RetrieveDiseaseInformation
 import kotlinx.coroutines.tasks.await
 
 object FirebaseDiseaseUtils {
@@ -51,7 +50,16 @@ object FirebaseDiseaseUtils {
                 .await()
 
             val diseases = snapshot.documents.mapNotNull { doc ->
-                doc.toObject(DiseaseInformation::class.java)
+                doc.data?.let {
+                    DiseaseInformation(
+                        diseaseId = it["diseaseId"] as? String ?: "",
+                        diseaseName = it["diseaseName"] as? String ?: "",
+                        diseaseDescription = it["diseaseDescription"] as? String ?: "",
+                        diseaseCause = it["diseaseCause"] as? String ?: "",
+                        diseaseSymptoms = it["diseaseSymptoms"] as? String ?: "",
+                        diseaseTreatment = it["diseaseTreatment"] as? String ?: ""
+                    )
+                }
             }
 
             diseases
@@ -75,10 +83,21 @@ object FirebaseDiseaseUtils {
                 .get()
                 .await()
 
-            snapshot.toObject(DiseaseInformation::class.java) ?: run {
-                onError("Disease not found")
+            if (snapshot != null && snapshot.data != null) {
+                val it = snapshot.data!!
+                DiseaseInformation(
+                    diseaseId = it["diseaseId"] as? String ?: "",
+                    diseaseName = it["diseaseName"] as? String ?: "",
+                    diseaseDescription = it["diseaseDescription"] as? String ?: "",
+                    diseaseCause = it["diseaseCause"] as? String ?: "",
+                    diseaseSymptoms = it["diseaseSymptoms"] as? String ?: "",
+                    diseaseTreatment = it["diseaseTreatment"] as? String ?: ""
+                )
+            } else {
+                onError("No Disease Data")
                 null
             }
+
         } catch (e: Exception) {
             Log.e(TAG, "Error fetching disease: ${e.message}")
             onError("Failed to fetch disease")

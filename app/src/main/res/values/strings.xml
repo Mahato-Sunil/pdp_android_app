@@ -18,4 +18,5 @@
     <string name="title_activity_admin_cases_screen">AdminCasesScreen</string>
     <string name="title_activity_admin_setting_screen">AdminSettingScreen</string>
     <string name="title_activity_admin_add_disease">AdminAddDisease</string>
+    <string name="title_activity_admin_disease_details">AdminDiseaseDetails</string>
 </resources>

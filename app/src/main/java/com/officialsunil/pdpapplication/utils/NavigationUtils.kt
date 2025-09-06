@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import com.officialsunil.pdpapplication.admin.screen.AdminAddDisease
 import com.officialsunil.pdpapplication.admin.screen.AdminCasesScreen
+import com.officialsunil.pdpapplication.admin.screen.AdminDiseaseDetails
 import com.officialsunil.pdpapplication.admin.screen.AdminHome
 import com.officialsunil.pdpapplication.admin.screen.AdminLoginScreen
 import com.officialsunil.pdpapplication.admin.screen.AdminSettingScreen
@@ -42,6 +43,7 @@ object NavigationUtils {
             "adminCase" -> Intent(context, AdminCasesScreen::class.java)
             "adminSettings" -> Intent(context, AdminSettingScreen::class.java)
             "addDisease" -> Intent(context, AdminAddDisease::class.java)
+            "diseaseInfo" -> Intent(context, AdminDiseaseDetails::class.java)
 
             else -> Intent(context, HomeActivity::class.java)
         }

@@ -2,7 +2,6 @@ package com.officialsunil.pdpapplication.admin.screen
 
 import android.content.Context
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -53,9 +52,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.officialsunil.pdpapplication.R
 import com.officialsunil.pdpapplication.admin.screen.ui.theme.PDPApplicationTheme
-import com.officialsunil.pdpapplication.utils.CustomDateTimeFormatter
+import com.officialsunil.pdpapplication.utils.DiseaseInformation
 import com.officialsunil.pdpapplication.utils.NavigationUtils
-import com.officialsunil.pdpapplication.utils.RetrieveDiseaseInformation
+import com.officialsunil.pdpapplication.utils.firebase.FirebaseDiseaseUtils
 import kotlinx.coroutines.launch
 
 class AdminCasesScreen : ComponentActivity() {
@@ -158,23 +157,22 @@ fun AdminHeaderUI() {
 fun AdminContainerUI(modifier: Modifier = Modifier, context: Context) {
     // fetch the data from the firebase using coroutine scope
     val coroutineScope = rememberCoroutineScope()
-    var diseaseData by remember { mutableStateOf<RetrieveDiseaseInformation?>(null) }
+    var diseaseData by remember { mutableStateOf<List<DiseaseInformation>>(emptyList()) }
     var isDataAvailable by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         coroutineScope.launch {
-//            val data = FirebaseFirestoreUtils.fetchAllDiseaseInfo(
-//                userId = FirebaseUserCredentials.getCurrentUserCredentails()?.uid.toString(),
-//                onError = {
-//                    isDataAvailable = false
-//                })
-//
-//            if (data != null && data.retrievePredictionData.isNotEmpty()) {
-//                diseaseData = data
-//                isDataAvailable = true
-//            } else {
-//                isDataAvailable = false
-//            }
+            val data = FirebaseDiseaseUtils.fetchAllDiseases(
+                onError = {
+                    isDataAvailable = false
+                })
+
+            if (data != null && data.isNotEmpty()) {
+                diseaseData = data
+                isDataAvailable = true
+            } else {
+                isDataAvailable = false
+            }
         }
     }
 
@@ -204,59 +202,59 @@ fun AdminContainerUI(modifier: Modifier = Modifier, context: Context) {
 
 @Composable
 fun DiseaseList(
-    diseaseData: RetrieveDiseaseInformation?, onItemClicked: (String) -> Unit
+    diseaseData: List<DiseaseInformation>?, onItemClicked: (String) -> Unit
 ) {
-    // columns to show the data
     LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxSize()
+        verticalArrangement = Arrangement.spacedBy(0.dp),
+        modifier = Modifier.fillMaxSize()
     ) {
+        items(diseaseData?.size ?: 0) { index ->
+            val data = diseaseData?.get(index) ?: return@items
 
-        items(diseaseData?.retrieveDiseaseInformation?.size ?: 0) { index ->
-            val data = diseaseData?.retrieveDiseaseInformation?.get(index) ?: return@items
-            Log.d("Admin", "Cases Screen  : ${data}")
-            // convert the base64 string back to image
-//            val convertedBitmap = ImageToBase64.convertBase64ToImage(prediction.imageBase64String)
+            // define the image drawables
+            val imageResource = when (data.diseaseName) {
+                "Early Blight" -> R.drawable.early_blight
+                "Late Blight" -> R.drawable.late_blight
+                "Healthy" -> R.drawable.healthy
+                else -> R.drawable.early_blight
+            }
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(90.dp)
-//                    .clickable { onItemClicked() }
                     .background(Color.White)
-                    .padding(horizontal = 16.dp)
+                    .clickable { onItemClicked(data.diseaseId) }
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
-
                 Image(
-                    painterResource(R.drawable.no_picture),
-//                    contentDescription = data.,Test
-                    contentDescription = "",
+                    painter = painterResource(imageResource),
+                    contentDescription = "Disease Image",
                     modifier = Modifier
-                        .size(60.dp)
-                        .clip(MaterialTheme.shapes.small)
-                        .background(Color.LightGray)
+                        .size(56.dp)
+                        .clip(MaterialTheme.shapes.medium)
+                        .background(Color(0xFFF0F0F0))
                 )
-                Spacer(modifier = Modifier.width(16.dp))
-                Column(
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = "Sample Disease",
-//                        text = data.predictedName,
-                        style = MaterialTheme.typography.titleMedium
-                    )
-
-//                    // get the formatted time from the timestamp
-//                    val formattedTime =
-//                        CustomDateTimeFormatter.formatDateTime(data.timestamp.toString())
-////                    val formattedTime= prediction.timestamp
-//                    Log.d("Firebase Time", formattedTime)
-//                    Text(
-//                        text = formattedTime,
-//                        style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray)
-//                    )
-                }
+                Spacer(modifier = Modifier.width(32.dp))
+                Text(
+                    text = data.diseaseName,
+                    style = TextStyle(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = Color.Black,
+                        textAlign = TextAlign.Start
+                    ),
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(vertical = 8.dp)
+                )
             }
-            HorizontalDivider(color = Color.LightGray, thickness = 1.dp)
+            // Bottom border
+            HorizontalDivider(
+                color = Color(0xFFE0E0E0),
+                thickness = 1.dp,
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp)
+            )
         }
     }
 }
